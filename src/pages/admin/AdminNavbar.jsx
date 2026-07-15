@@ -1,4 +1,5 @@
 import React from 'react'
+import adminProfileImage from '../../assets/admin-profile.jpg'
 
 export default function AdminNavbar({ adminName, onLogout }) {
     return (
@@ -18,7 +19,7 @@ export default function AdminNavbar({ adminName, onLogout }) {
 
             <div className="admin-navbar-right">
                 <div className="admin-navbar-user">
-                    <div className="admin-avatar-sm">{adminName.charAt(0).toUpperCase()}</div>
+                    <img className="admin-avatar-sm" src={adminProfileImage} alt={`${adminName}'s profile`} />
                     <span className="admin-navbar-username">{adminName}</span>
                 </div>
                 <button className="admin-navbar-logout" onClick={onLogout} title="Logout">

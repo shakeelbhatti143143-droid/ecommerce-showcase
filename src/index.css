@@ -1875,6 +1875,8 @@ h6 {
   font-weight: 700;
   font-size: 1rem;
   color: white;
+  object-fit: cover;
+  border: 2px solid rgba(167, 139, 250, 0.7);
 }
 
 .admin-user-info {
@@ -2790,6 +2792,8 @@ h6 {
   font-size: 0.9rem;
   font-weight: 700;
   color: white;
+  object-fit: cover;
+  border: 2px solid rgba(167, 139, 250, 0.7);
 }
 
 .admin-navbar-username {
@@ -2900,6 +2904,46 @@ h6 {
   color: white;
   flex-shrink: 0;
   overflow: hidden;
+}
+
+.admin-profile-avatar-button {
+  position: relative;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.admin-profile-avatar-button:hover,
+.admin-profile-avatar-button:focus-visible {
+  border-color: var(--accent-primary);
+  outline: none;
+  transform: scale(1.04);
+}
+
+.admin-profile-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  background: rgba(30, 20, 60, 0.72);
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.admin-profile-avatar-button:hover .admin-profile-avatar-overlay,
+.admin-profile-avatar-button:focus-visible .admin-profile-avatar-overlay {
+  opacity: 1;
+}
+
+.admin-profile-image-input {
+  display: none;
 }
 
 .admin-profile-info {

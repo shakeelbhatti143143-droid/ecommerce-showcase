@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { getAdminProfile, saveAdminProfile, getSiteContent, saveSiteContent } from '../../services/localStore'
 
 function ProfileModal({ show, profile, onClose, onSave }) {
@@ -227,6 +227,7 @@ export default function AdminSettings() {
     const [editingSection, setEditingSection] = useState(null)
     const [siteContent, setSiteContent] = useState(getSiteContent())
     const [toast, setToast] = useState({ show: false, msg: '', type: 'success' })
+    const profileImageInputRef = useRef(null)
 
     const showToast = (msg, type = 'success') => {
         setToast({ show: true, msg, type })
@@ -266,6 +267,32 @@ export default function AdminSettings() {
         showToast('Content updated successfully! Changes are live.')
     }
 
+    const handleProfileImageChange = (event) => {
+        const file = event.target.files?.[0]
+        event.target.value = ''
+        if (!file) return
+
+        if (!file.type.startsWith('image/')) {
+            showToast('Please choose an image file.', 'error')
+            return
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            showToast('Choose an image smaller than 2 MB.', 'error')
+            return
+        }
+
+        const reader = new FileReader()
+        reader.onload = () => {
+            const updatedProfile = { ...profile, picture: reader.result }
+            saveAdminProfile(updatedProfile)
+            setProfile(updatedProfile)
+            showToast('Profile photo updated successfully!')
+        }
+        reader.onerror = () => showToast('Unable to read this image. Please try another file.', 'error')
+        reader.readAsDataURL(file)
+    }
+
     const sections = [
         { key: 'home', label: 'Home', icon: '🏠' },
         { key: 'features', label: 'Features', icon: '⚡' },
@@ -294,13 +321,27 @@ export default function AdminSettings() {
                 {activeTab === 'profile' && (
                     <div className="admin-profile-card">
                         <div className="admin-profile-header">
-                            <div className="admin-profile-avatar">
+                            <button
+                                type="button"
+                                className="admin-profile-avatar admin-profile-avatar-button"
+                                onClick={() => profileImageInputRef.current?.click()}
+                                aria-label="Upload or change profile photo"
+                                title="Change profile photo"
+                            >
                                 {profile.picture ? (
                                     <img src={profile.picture} alt={profile.name} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                                 ) : (
                                     profile.name.charAt(0).toUpperCase()
                                 )}
-                            </div>
+                                <span className="admin-profile-avatar-overlay">Change</span>
+                            </button>
+                            <input
+                                ref={profileImageInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleProfileImageChange}
+                                className="admin-profile-image-input"
+                            />
                             <div className="admin-profile-info">
                                 <h2>{profile.name}</h2>
                                 <p>{profile.bio}</p>

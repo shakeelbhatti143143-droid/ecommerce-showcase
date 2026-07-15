@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import emailjs from '@emailjs/browser'
+import adminProfileImage from '../../assets/admin-profile.jpg'
 import { safeFetch, safeDelete } from '../../services/supabase'
 import {
     getAllMergedContacts,
     getAllMergedNewsletters,
     deleteLocalContact,
     deleteLocalNewsletter,
-    markLocalContactRead
+    markLocalContactRead,
+    getAdminProfile
 } from '../../services/localStore'
 function StatCard({ icon, label, value, color }) {
     return (
@@ -105,6 +107,7 @@ export default function AdminDashboard() {
     const navigate = useNavigate()
     const [activeTab, setActiveTab] = useState('dashboard')
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+    const [profilePicture, setProfilePicture] = useState(() => getAdminProfile().picture)
     const [adminName, setAdminName] = useState('')
     const [contacts, setContacts] = useState([])
     const [newsletters, setNewsletters] = useState([])
@@ -161,6 +164,12 @@ export default function AdminDashboard() {
         }
         fetchData()
     }, [navigate, fetchData])
+
+    useEffect(() => {
+        const handleProfileUpdate = (event) => setProfilePicture(event.detail?.picture || null)
+        window.addEventListener('shopsphere-profile-update', handleProfileUpdate)
+        return () => window.removeEventListener('shopsphere-profile-update', handleProfileUpdate)
+    }, [])
 
     // Listen for real-time data updates from form submissions
     useEffect(() => {
@@ -683,7 +692,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="admin-sidebar-user">
-                    <div className="admin-avatar">{adminName.charAt(0).toUpperCase()}</div>
+                    <img className="admin-avatar" src={profilePicture || adminProfileImage} alt={`${adminName}'s profile`} />
                     <div className="admin-user-info">
                         <span className="admin-user-name">{adminName}</span>
                         <span className="admin-user-role">Administrator</span>
