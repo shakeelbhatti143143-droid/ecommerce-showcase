@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import emailjs from '@emailjs/browser'
 import { safeFetch, safeDelete } from '../../services/supabase'
 import {
     getAllMergedContacts,
@@ -33,19 +34,29 @@ function Toast({ msg, type, show }) {
 
 function ApproveModal({ show, contact, onClose, onApprove }) {
     const [sending, setSending] = useState(false)
+    const [sendError, setSendError] = useState('')
     const [adminEmail, setAdminEmail] = useState('shakeelbhatti143143@gmail.com')
     const [subject, setSubject] = useState('Your Message Has Been Approved ✅')
     const [replyBody, setReplyBody] = useState('Dear Customer,\n\nThank you for reaching out to us. We are pleased to inform you that your message has been reviewed and approved by our team.\n\nWe appreciate your inquiry and will get back to you shortly with a detailed response.\n\nBest regards,\nShakeel\nFrosted Tech Team')
 
     if (!show || !contact) return null
 
-    const handleApprove = () => {
+    const handleApprove = async () => {
+        if (!contact.email) {
+            setSendError('This customer does not have an email address.')
+            return
+        }
+
         setSending(true)
-        // Simulate sending email
-        setTimeout(() => {
-            onApprove(contact, { to: contact.email, from: adminEmail, subject, body: replyBody })
+        setSendError('')
+        try {
+            await onApprove(contact, { to: contact.email, from: adminEmail, subject, body: replyBody })
+        } catch (error) {
+            console.error('Approval email error:', error)
+            setSendError(error?.text || error?.message || 'Email could not be sent. Please try again.')
+        } finally {
             setSending(false)
-        }, 1500)
+        }
     }
 
     return (
@@ -77,6 +88,7 @@ function ApproveModal({ show, contact, onClose, onApprove }) {
                             onChange={(e) => setReplyBody(e.target.value)}
                         />
                     </div>
+                    {sendError && <p className="form-error" role="alert">Email error: {sendError}</p>}
                 </div>
                 <div className="admin-modal-footer">
                     <button className="admin-btn-cancel" onClick={onClose}>Cancel</button>
@@ -118,7 +130,7 @@ export default function AdminDashboard() {
         setLoading(true)
         try {
             const [contactsRes, newslettersRes] = await Promise.all([
-                safeFetch('contact_messages', { orderBy: 'created_at', ascending: false }),
+                safeFetch('contact', { orderBy: 'created_at', ascending: false }),
                 safeFetch('newsletter', { orderBy: 'created_at', ascending: false })
             ])
             // Merge local + Supabase data
@@ -215,7 +227,7 @@ export default function AdminDashboard() {
                 deleteLocalContact(id)
                 setContacts(prev => prev.filter(c => c.id !== id))
             } else {
-                const { error } = await safeDelete('contact_messages', 'id', id)
+                const { error } = await safeDelete('contact', 'id', id)
                 if (error) throw error
                 setContacts(prev => prev.filter(c => c.id !== id))
             }
@@ -248,7 +260,33 @@ export default function AdminDashboard() {
         }
     }
 
-    const handleApprove = (contact, emailData) => {
+    const handleApprove = async (contact, emailData) => {
+        const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID
+        const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
+        const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+
+        if (!serviceId || !templateId || !publicKey) {
+            throw new Error('EmailJS is not configured. Add the EmailJS VITE_ variables to your environment.')
+        }
+
+        await emailjs.send(serviceId, templateId, {
+            to_email: emailData.to,
+            email: emailData.to,
+            user_email: emailData.to,
+            name: contact.name || 'Customer',
+            title: emailData.subject,
+            to_name: contact.name || 'Customer',
+            from_email: emailData.from,
+            reply_to: emailData.from,
+            subject: emailData.subject,
+            message: emailData.body,
+            message_body: emailData.body,
+            customer_name: contact.name || 'Customer',
+            customer_email: emailData.to,
+            original_subject: contact.subject || '',
+            original_message: contact.message || ''
+        }, publicKey)
+
         // Save approved ID
         const newApproved = [...approvedIds, contact.id]
         setApprovedIds(newApproved)

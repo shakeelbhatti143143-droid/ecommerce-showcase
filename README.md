@@ -89,6 +89,9 @@ npm install
 ```env
 VITE_SUPABASE_URL=https://xxxxxxxxxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
+VITE_EMAILJS_SERVICE_ID=your_emailjs_service_id
+VITE_EMAILJS_TEMPLATE_ID=your_emailjs_template_id
+VITE_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
 ```
 
 ### 3. Create Database Tables
