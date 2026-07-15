@@ -104,6 +104,7 @@ function ApproveModal({ show, contact, onClose, onApprove }) {
 export default function AdminDashboard() {
     const navigate = useNavigate()
     const [activeTab, setActiveTab] = useState('dashboard')
+    const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
     const [adminName, setAdminName] = useState('')
     const [contacts, setContacts] = useState([])
     const [newsletters, setNewsletters] = useState([])
@@ -669,8 +670,13 @@ export default function AdminDashboard() {
 
     return (
         <div className="admin-dashboard-page">
+            <button
+                className={`admin-mobile-menu-backdrop ${mobileSidebarOpen ? 'open' : ''}`}
+                onClick={() => setMobileSidebarOpen(false)}
+                aria-label="Close navigation menu"
+            />
             {/* Sidebar */}
-            <aside className="admin-sidebar">
+            <aside className={`admin-sidebar ${mobileSidebarOpen ? 'open' : ''}`}>
                 <div className="admin-sidebar-header">
                     <div className="admin-sidebar-logo">🛡️</div>
                     <h2>Admin Panel</h2>
@@ -687,13 +693,13 @@ export default function AdminDashboard() {
                 <nav className="admin-sidebar-nav">
                     <button
                         className={`admin-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('dashboard')}
+                        onClick={() => { setActiveTab('dashboard'); setMobileSidebarOpen(false) }}
                     >
                         <span>📊</span> Dashboard
                     </button>
                     <button
                         className={`admin-nav-item ${activeTab === 'messages' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('messages')}
+                        onClick={() => { setActiveTab('messages'); setMobileSidebarOpen(false) }}
                     >
                         <span>📬</span> Messages
                         {contacts.filter(c => !c.read).length > 0 && (
@@ -702,13 +708,13 @@ export default function AdminDashboard() {
                     </button>
                     <button
                         className={`admin-nav-item ${activeTab === 'newsletter' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('newsletter')}
+                        onClick={() => { setActiveTab('newsletter'); setMobileSidebarOpen(false) }}
                     >
                         <span>📧</span> Subscribers
                     </button>
                     <button
                         className={`admin-nav-item ${activeTab === 'database' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('database')}
+                        onClick={() => { setActiveTab('database'); setMobileSidebarOpen(false) }}
                     >
                         <span>🗄️</span> Database
                     </button>
@@ -730,6 +736,13 @@ export default function AdminDashboard() {
             {/* Main Content */}
             <main className="admin-main">
                 <header className="admin-topbar">
+                    <button
+                        className="admin-mobile-menu-toggle"
+                        onClick={() => setMobileSidebarOpen(true)}
+                        aria-label="Open navigation menu"
+                    >
+                        Menu
+                    </button>
                     <h1>
                         {activeTab === 'dashboard' && '📊 Dashboard Overview'}
                         {activeTab === 'messages' && '📬 Contact Messages'}

@@ -4370,3 +4370,106 @@ button {
     padding: 12px;
   }
 }
+
+/* Mobile admin navigation: a full-width workspace with an off-canvas menu. */
+.admin-mobile-menu-toggle,
+.admin-mobile-menu-backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .admin-dashboard-page {
+    display: block;
+  }
+
+  .admin-sidebar {
+    width: min(280px, 82vw);
+    padding-top: 0;
+    transform: translateX(-105%);
+    transition: transform 0.25s ease;
+    z-index: 1200;
+    overflow-y: auto;
+    box-shadow: none;
+  }
+
+  .admin-sidebar.open {
+    transform: translateX(0);
+    box-shadow: 12px 0 36px rgba(0, 0, 0, 0.35);
+  }
+
+  .admin-sidebar-header,
+  .admin-sidebar-user,
+  .admin-sidebar-nav,
+  .admin-sidebar-footer {
+    padding-inline: 18px;
+  }
+
+  .admin-sidebar-header h2,
+  .admin-sidebar-user .admin-user-info,
+  .admin-nav-item span:not(:first-child),
+  .admin-sidebar-footer .admin-nav-item span:not(:first-child) {
+    display: initial;
+  }
+
+  .admin-sidebar-header,
+  .admin-sidebar-user,
+  .admin-nav-item {
+    justify-content: flex-start;
+  }
+
+  .admin-nav-item {
+    padding: 12px 14px;
+  }
+
+  .admin-main {
+    margin-left: 0;
+    min-width: 0;
+  }
+
+  .admin-mobile-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .admin-mobile-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    border: 0;
+    background: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .admin-mobile-menu-backdrop.open {
+    display: block;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .admin-topbar {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-sidebar {
+    width: min(280px, 88vw);
+  }
+
+  .admin-main {
+    margin-left: 0;
+  }
+}
