@@ -14,31 +14,37 @@ const features = [
   {
     icon: '📦',
     title: 'Inventory Management',
+    to: '/features/inventory-management',
     description: 'Track stock levels, set reorder alerts, and manage your product catalog with ease. Real-time sync across all sales channels.',
   },
   {
     icon: '📊',
     title: 'Analytics Dashboard',
+    to: '/features/analytics',
     description: 'Gain deep insights into your store performance with beautiful charts, revenue reports, and customer behavior analytics.',
   },
   {
     icon: '🔒',
     title: 'Secure Payments',
+    to: '/features/payment-processing',
     description: 'PCI-DSS compliant payment processing. Accept 50+ payment methods including cards, PayPal, Apple Pay, and crypto.',
   },
   {
     icon: '🚚',
     title: 'Order Tracking',
+    to: '/features/order-tracking',
     description: 'Real-time order tracking from checkout to doorstep. Automated email notifications keep customers informed every step.',
   },
   {
     icon: '👥',
     title: 'Customer Management',
+    to: '/features/crm',
     description: 'Build lasting relationships with a full CRM. Segment customers, track purchase history, and run targeted campaigns.',
   },
   {
     icon: '🏪',
     title: 'Multi-Vendor Support',
+    to: '/features/multi-vendor',
     description: 'Launch a marketplace with multiple sellers. Manage commissions, payouts, and vendor performance from one dashboard.',
   },
 ]

@@ -1,8 +1,10 @@
 import React, { useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-export default function FeatureCard({ icon, title, description, delay = 0 }) {
+export default function FeatureCard({ icon, title, description, functionalities = [], to, delay = 0 }) {
   const cardRef = useRef(null)
   const [style, setStyle] = useState({})
+  const navigate = useNavigate()
 
   const handleMouseMove = (e) => {
     const card = cardRef.current
@@ -37,6 +39,15 @@ export default function FeatureCard({ icon, title, description, delay = 0 }) {
       className="feature-card card-3d grid-item-3d"
       data-aos="fade-up"
       data-aos-delay={delay}
+      role={to ? 'link' : undefined}
+      tabIndex={to ? 0 : undefined}
+      onClick={() => to && navigate(to)}
+      onKeyDown={(event) => {
+        if (to && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          navigate(to)
+        }
+      }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={{
@@ -49,6 +60,16 @@ export default function FeatureCard({ icon, title, description, delay = 0 }) {
       </div>
       <h3 className="feature-title">{title}</h3>
       <p className="feature-desc">{description}</p>
+      {functionalities.length > 0 && (
+        <div className="feature-functionality">
+          <p className="feature-functionality-label">Key functionality</p>
+          <ul>
+            {functionalities.map((functionality) => (
+              <li key={functionality}>{functionality}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="feature-shine" />
     </div>
   )
