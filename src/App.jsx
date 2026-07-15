@@ -10,6 +10,9 @@ import FeatureDetail from './pages/FeatureDetail'
 import Pricing from './pages/Pricing'
 import About from './pages/About'
 import Contact from './pages/Contact'
+import Shop from './pages/Shop'
+import { ShopProvider } from './context/ShopContext'
+import ShopOverlays from './components/ShopOverlays'
 import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminSettings from './pages/admin/AdminSettings'
@@ -44,6 +47,7 @@ function AppContent() {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/shop" element={<Shop />} />
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={
             <ProtectedRoute>
@@ -59,6 +63,7 @@ function AppContent() {
       </main>
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && <BackToTop />}
+      {!isAdminRoute && <ShopOverlays />}
     </>
   )
 }
@@ -87,10 +92,12 @@ export default function App() {
 
   return (
     <ThemeContext.Provider value={{ isDark, setIsDark }}>
-      <BrowserRouter>
-        {loading && <Loader />}
-        <AppContent />
-      </BrowserRouter>
+      <ShopProvider>
+        <BrowserRouter>
+          {loading && <Loader />}
+          <AppContent />
+        </BrowserRouter>
+      </ShopProvider>
     </ThemeContext.Provider>
   )
 }

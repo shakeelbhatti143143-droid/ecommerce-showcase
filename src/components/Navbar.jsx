@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { NavLink, Link } from 'react-router-dom'
 import { useTheme } from '../App'
+import { useShop } from '../context/ShopContext'
 
 export default function Navbar() {
   const { isDark, setIsDark } = useTheme()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const { cart, user, setLoginOpen, setCartOpen } = useShop()
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -21,6 +23,7 @@ export default function Navbar() {
 
   const navLinks = [
     { to: '/', label: 'Home' },
+    { to: '/shop', label: 'Shop' },
     { to: '/features', label: 'Features' },
     { to: '/pricing', label: 'Pricing' },
     { to: '/about', label: 'About' },
@@ -83,9 +86,8 @@ export default function Navbar() {
               >
                 {isDark ? '☀️' : '🌙'}
               </button>
-              <Link to="/contact" className="btn btn-primary btn-sm">
-                Get Started
-              </Link>
+              <button className="navbar-shop-login" onClick={() => setLoginOpen(true)}>{user ? `Hi, ${user.account_name}` : 'Login'}</button>
+              <button className="navbar-cart" onClick={() => setCartOpen(true)} aria-label={`Open cart with ${cart.length} items`}>🛒 <span>Cart</span><b>{cart.reduce((sum, item) => sum + item.quantity, 0)}</b></button>
               <button
                 id="hamburger-btn"
                 className={`hamburger ${menuOpen ? 'open' : ''}`}
