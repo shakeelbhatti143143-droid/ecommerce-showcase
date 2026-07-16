@@ -132,7 +132,7 @@ For production, protect database access with Supabase Authentication and restric
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+OPEN:https://ecommerce-showcase-silk.vercel.app/
 
 ## Available scripts
 
