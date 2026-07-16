@@ -7,7 +7,14 @@ export default function Navbar() {
   const { isDark, setIsDark } = useTheme()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const { cart, user, setLoginOpen, setCartOpen } = useShop()
+
+  const {
+    cart,
+    user,
+    setUser,
+    setLoginOpen,
+    setCartOpen
+  } = useShop()
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -15,10 +22,11 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      document.body.style.overflow = ''
+    }
   }, [menuOpen])
 
   const navLinks = [
@@ -30,15 +38,19 @@ export default function Navbar() {
     { to: '/contact', label: 'Contact' },
   ]
 
-  const isLoggedIn = () => {
-    const auth = localStorage.getItem('admin-auth')
-    if (!auth) return false
-    try {
-      const parsed = JSON.parse(auth)
-      return parsed.loggedIn === true
-    } catch {
-      return false
+  const isAdmin = localStorage.getItem('isAdmin') === 'true'
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAdmin')
+    localStorage.removeItem('admin-auth')
+    localStorage.removeItem('user')
+
+    if (setUser) {
+      setUser(null)
     }
+
+    alert('Logged out successfully!')
+    window.location.reload()
   }
 
   return (
@@ -46,72 +58,106 @@ export default function Navbar() {
       <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
         <div className="container">
           <div className="navbar-inner">
-            {/* Logo */}
-            <Link to="/" className="navbar-logo" onClick={() => setMenuOpen(false)}>
+
+            <Link
+              to="/"
+              className="navbar-logo"
+              onClick={() => setMenuOpen(false)}
+            >
               <div className="navbar-logo-icon">🛒</div>
               Shop<span className="accent">Sphere</span>
             </Link>
 
-            {/* Desktop Nav Links */}
             <ul className="navbar-links">
               {navLinks.map(link => (
                 <li key={link.to}>
                   <NavLink
                     to={link.to}
                     end={link.to === '/'}
-                    className={({ isActive }) => isActive ? 'active' : ''}
+                    className={({ isActive }) =>
+                      isActive ? 'active' : ''
+                    }
                   >
                     {link.label}
                   </NavLink>
                 </li>
               ))}
-              <li>
-                <NavLink
-                  to="/admin"
-                  className={({ isActive }) => isActive ? 'active' : ''}
-                >
-                  🔐 {isLoggedIn() ? 'Dashboard' : 'Admin'}
-                </NavLink>
-              </li>
+
+              {isAdmin && (
+                <li>
+                  <NavLink
+                    to="/admin/dashboard"
+                    className={({ isActive }) =>
+                      isActive ? 'active' : ''
+                    }
+                  >
+                    🔐 Dashboard
+                  </NavLink>
+                </li>
+              )}
             </ul>
 
-            {/* Actions */}
             <div className="navbar-actions">
+
               <button
-                id="theme-toggle"
                 className="theme-toggle"
                 onClick={() => setIsDark(!isDark)}
-                aria-label="Toggle theme"
-                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               >
                 {isDark ? '☀️' : '🌙'}
               </button>
-              <button className="navbar-shop-login" onClick={() => setLoginOpen(true)}>{user ? `Hi, ${user.account_name}` : 'Login'}</button>
-              <button className="navbar-cart" onClick={() => setCartOpen(true)} aria-label={`Open cart with ${cart.length} items`}>🛒 <span>Cart</span><b>{cart.reduce((sum, item) => sum + item.quantity, 0)}</b></button>
+
+              {user || isAdmin ? (
+                <button
+                  className="navbar-shop-login"
+                  onClick={handleLogout}
+                >
+                  🚪 Logout
+                </button>
+              ) : (
+                <button
+                  className="navbar-shop-login"
+                  onClick={() => setLoginOpen(true)}
+                >
+                  Login
+                </button>
+              )}
+
               <button
-                id="hamburger-btn"
+                className="navbar-cart"
+                onClick={() => setCartOpen(true)}
+              >
+                🛒 <span>Cart</span>
+                <b>{cart.reduce((sum, item) => sum + item.quantity, 0)}</b>
+              </button>
+
+              <button
                 className={`hamburger ${menuOpen ? 'open' : ''}`}
                 onClick={() => setMenuOpen(!menuOpen)}
-                aria-label="Toggle mobile menu"
               >
                 <span />
                 <span />
                 <span />
               </button>
+
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Nav Overlay */}
       <div className={`mobile-nav ${menuOpen ? 'open' : ''}`}>
+
         <button
           className="theme-toggle"
-          style={{ position: 'absolute', top: '24px', right: '24px' }}
+          style={{
+            position: 'absolute',
+            top: '24px',
+            right: '24px'
+          }}
           onClick={() => setIsDark(!isDark)}
         >
           {isDark ? '☀️' : '🌙'}
         </button>
+
         {navLinks.map(link => (
           <NavLink
             key={link.to}
@@ -122,13 +168,23 @@ export default function Navbar() {
             {link.label}
           </NavLink>
         ))}
-        <NavLink
-          to="/admin"
-          onClick={() => setMenuOpen(false)}
-          style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', textDecoration: 'none', padding: '12px 40px' }}
-        >
-          🔐 {isLoggedIn() ? 'Dashboard' : 'Admin'}
-        </NavLink>
+
+        {isAdmin && (
+          <NavLink
+            to="/admin/dashboard"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              fontSize: '1.5rem',
+              fontWeight: '700',
+              color: 'var(--text-primary)',
+              textDecoration: 'none',
+              padding: '12px 40px'
+            }}
+          >
+            🔐 Dashboard
+          </NavLink>
+        )}
+
         <Link
           to="/contact"
           className="btn btn-primary"
@@ -137,6 +193,7 @@ export default function Navbar() {
         >
           Get Started
         </Link>
+
       </div>
     </>
   )

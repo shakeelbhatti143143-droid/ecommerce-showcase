@@ -1,13 +1,22 @@
-import { supabase } from '../assets/subabaseclient'
-import bcrypt from 'bcryptjs'
+import { supabase } from "../assets/subabaseclient";
+import { verifyAdminCredentials } from "./adminAuth";
 
 const configured = Boolean(
   import.meta.env.VITE_SUPABASE_URL &&
   import.meta.env.VITE_SUPABASE_ANON_KEY
-)
+);
 
 const message = (error) =>
-  error?.message || 'Unable to connect to Supabase. Please try again.'
+  error?.message || "Unable to connect to Supabase. Please try again.";
+
+function normalizeShopper(user) {
+  return {
+    account_name: user.user_metadata?.name || user.email?.split("@")[0],
+    account_email: user.email,
+    name: user.user_metadata?.name || user.email?.split("@")[0],
+    email: user.email,
+  };
+}
 
 // ==========================
 // CREATE NEW ACCOUNT
@@ -15,33 +24,29 @@ const message = (error) =>
 export async function createShopAccount({ name, email, password }) {
   if (!configured) {
     return {
-      data: {
-        account_name: name,
-        account_email: email,
-      },
-    }
+      error: "Supabase is not configured.",
+    };
   }
 
-  // Hash the password
-  const hashedPassword = await bcrypt.hash(password, 10)
-
-  const { data, error } = await supabase
-    .from('login')
-    .insert([
-      {
-        account_name: name,
-        account_email: email,
-        account_password: hashedPassword,
+  const { data, error } = await supabase.auth.signUp({
+    email: email.trim().toLowerCase(),
+    password: password.trim(),
+    options: {
+      data: {
+        name: name.trim(),
       },
-    ])
-    .select()
-    .single()
+    },
+  });
 
   if (error) {
-    return { error: message(error) }
+    return {
+      error: message(error),
+    };
   }
 
-  return { data }
+  return {
+    data: normalizeShopper(data.user),
+  };
 }
 
 // ==========================
@@ -50,37 +55,97 @@ export async function createShopAccount({ name, email, password }) {
 export async function authenticateShopper({ email, password }) {
   if (!configured) {
     return {
+      error: "Supabase is not configured.",
+    };
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.trim().toLowerCase(),
+    password: password.trim(),
+  });
+
+  if (!error && data.user) {
+    return {
+      data: normalizeShopper(data.user),
+    };
+  }
+
+  // Check Admin Login
+  const adminResult = await verifyAdminCredentials({ email, password });
+
+  if (adminResult.data) {
+    return {
       data: {
-        account_email: email,
-        account_name: email.split('@')[0],
+        account_name: adminResult.data.name || "Admin",
+        account_email: adminResult.data.email,
+        name: adminResult.data.name,
+        email: adminResult.data.email,
+        isAdmin: true,
       },
-    }
+    };
   }
 
-  // Find user by email only
-  const { data, error } = await supabase
-    .from('login')
-    .select('*')
-    .eq('account_email', email)
-    .single()
+  return {
+    error: error?.message || "Invalid email or password.",
+  };
+}
 
-  if (error || !data) {
+// ==========================
+// FORGOT PASSWORD
+// ==========================
+export async function resetShopPassword(email) {
+  if (!configured) {
     return {
-      error: 'Invalid email or password.',
-    }
+      error: "Supabase is not configured.",
+    };
   }
 
-  // Compare entered password with stored hash
-  const passwordMatch = await bcrypt.compare(
-    password,
-    data.account_password
-  )
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    email.trim().toLowerCase(),
+    {
+      redirectTo: `${window.location.origin}/reset-password`,
+    }
+  );
 
-  if (!passwordMatch) {
+  if (error) {
     return {
-      error: 'Invalid email or password.',
-    }
+      error: message(error),
+    };
   }
 
-  return { data }
+  return {
+    data: "Password reset email sent successfully.",
+  };
+}
+
+// ==========================
+// UPDATE PASSWORD
+// ==========================
+export async function updateShopPassword(newPassword) {
+  if (!configured) {
+    return {
+      error: "Supabase is not configured.",
+    };
+  }
+
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword.trim(),
+  });
+
+  if (error) {
+    return {
+      error: message(error),
+    };
+  }
+
+  return {
+    data,
+  };
+}
+
+// ==========================
+// LOGOUT
+// ==========================
+export async function logoutShopper() {
+  await supabase.auth.signOut();
 }

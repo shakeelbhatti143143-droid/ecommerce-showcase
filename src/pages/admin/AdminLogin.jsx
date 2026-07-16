@@ -1,103 +1,128 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  loginAdmin,
+  persistAdminSession,
+} from "../../services/adminAuth";
 
 export default function AdminLogin() {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
-    const navigate = useNavigate()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    const ADMIN_EMAIL = 'shakeelbhatti1431432@gmail.com'
-    const ADMIN_PASSWORD = '1234qwerty'
-    const ADMIN_NAME = 'Shakeel'
+  const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
-        setError('')
+  useEffect(() => {
+    if (localStorage.getItem("isAdmin") === "true") {
+      navigate("/admin/dashboard", { replace: true });
+    }
+  }, [navigate]);
 
-        if (!email.trim() || !password.trim()) {
-            setError('Please enter both email and password.')
-            return
-        }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        setLoading(true)
+    setError("");
 
-        // Simulate auth delay
-        setTimeout(() => {
-            if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-                localStorage.setItem('admin-auth', JSON.stringify({
-                    name: ADMIN_NAME,
-                    email: ADMIN_EMAIL,
-                    loggedIn: true,
-                    timestamp: Date.now()
-                }))
-                navigate('/admin/dashboard')
-            } else {
-                setError('Invalid email or password. Access denied.')
-                setLoading(false)
-            }
-        }, 800)
+    if (!email.trim() || !password.trim()) {
+      setError("Please enter your email and password.");
+      return;
     }
 
-    return (
-        <div className="admin-login-page">
-            <div className="admin-login-container">
-                <div className="admin-login-header">
-                    <div className="admin-login-icon">🛡️</div>
-                    <h1>Admin Portal</h1>
-                    <p>Enter your credentials to access the dashboard</p>
-                </div>
+    setLoading(true);
 
-                <form onSubmit={handleSubmit} className="admin-login-form" noValidate>
-                    {error && (
-                        <div className="admin-login-error">
-                            <span>⚠️</span> {error}
-                        </div>
-                    )}
+    try {
+      const { data, error } = await loginAdmin(email, password);
 
-                    <div className="form-group">
-                        <label className="form-label" htmlFor="admin-email">Email Address</label>
-                        <input
-                            id="admin-email"
-                            type="email"
-                            className="form-input"
-                            placeholder="admin@example.com"
-                            value={email}
-                            onChange={(e) => { setEmail(e.target.value); setError('') }}
-                            disabled={loading}
-                            autoComplete="email"
-                        />
-                    </div>
+      if (error) {
+        setError(error);
+        return;
+      }
 
-                    <div className="form-group">
-                        <label className="form-label" htmlFor="admin-password">Password</label>
-                        <input
-                            id="admin-password"
-                            type="password"
-                            className="form-input"
-                            placeholder="Enter your password"
-                            value={password}
-                            onChange={(e) => { setPassword(e.target.value); setError('') }}
-                            disabled={loading}
-                            autoComplete="current-password"
-                        />
-                    </div>
+      persistAdminSession(data.user);
 
-                    <button
-                        type="submit"
-                        className="btn btn-primary btn-lg"
-                        disabled={loading}
-                        style={{ width: '100%', justifyContent: 'center', opacity: loading ? 0.7 : 1 }}
-                    >
-                        {loading ? '⏳ Verifying...' : '🔐 Access Dashboard'}
-                    </button>
-                </form>
+      navigate("/admin/dashboard");
+    } catch (err) {
+      setError("Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                <div className="admin-login-footer">
-                    <a href="/" className="admin-back-link">← Back to Home</a>
-                </div>
-            </div>
+  return (
+    <div className="admin-login-page">
+      <div className="admin-login-container">
+
+        <div className="admin-login-header">
+          <div className="admin-login-icon">🛡️</div>
+          <h1>Admin Portal</h1>
+          <p>Login with your admin account</p>
         </div>
-    )
+
+        <form
+          onSubmit={handleSubmit}
+          className="admin-login-form"
+          noValidate
+        >
+          {error && (
+            <div className="admin-login-error">
+              ⚠️ {error}
+            </div>
+          )}
+
+          <div className="form-group">
+            <label>Email Address</label>
+
+            <input
+              type="email"
+              className="form-input"
+              placeholder="admin@gmail.com"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError("");
+              }}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Password</label>
+
+            <input
+              type="password"
+              className="form-input"
+              placeholder="Enter Password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError("");
+              }}
+              disabled={loading}
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg"
+            disabled={loading}
+            style={{
+              width: "100%",
+              justifyContent: "center",
+              opacity: loading ? 0.7 : 1,
+            }}
+          >
+            {loading ? "Signing In..." : "Login"}
+          </button>
+        </form>
+
+        <div className="admin-login-footer">
+          <a href="/" className="admin-back-link">
+            ← Back to Home
+          </a>
+        </div>
+
+      </div>
+    </div>
+  );
 }

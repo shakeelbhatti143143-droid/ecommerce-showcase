@@ -226,8 +226,9 @@ export default function AdminDashboard() {
     }, [activeTab, contacts])
 
     const handleLogout = () => {
+        localStorage.removeItem('isAdmin')
         localStorage.removeItem('admin-auth')
-        navigate('/admin')
+        navigate('/')
     }
 
     const handleDeleteContact = async (id) => {

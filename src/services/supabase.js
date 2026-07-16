@@ -1,6 +1,8 @@
 import { supabase } from "../assets/subabaseclient";
 
-// Read data
+// ===============================
+// FETCH
+// ===============================
 export async function safeFetch(table) {
   const { data, error } = await supabase
     .from(table)
@@ -14,26 +16,34 @@ export async function safeFetch(table) {
   return data;
 }
 
-// Insert data
+// ===============================
+// INSERT
+// ===============================
 export async function safeInsert(table, record) {
   const { data, error } = await supabase
     .from(table)
-    .insert([record]);
+    .insert([record])
+    .select();
 
   return { data, error };
 }
 
-// Update data
+// ===============================
+// UPDATE
+// ===============================
 export async function safeUpdate(table, id, updates) {
   const { data, error } = await supabase
     .from(table)
     .update(updates)
-    .eq("id", id);
+    .eq("id", id)
+    .select();
 
   return { data, error };
 }
 
-// Delete data
+// ===============================
+// DELETE
+// ===============================
 export async function safeDelete(table, id) {
   const { error } = await supabase
     .from(table)
