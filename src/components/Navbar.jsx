@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { NavLink, Link } from 'react-router-dom'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { useTheme } from '../App'
 import { useShop } from '../context/ShopContext'
+import { supabase } from '../assets/subabaseclient'
 
 export default function Navbar() {
   const { isDark, setIsDark } = useTheme()
+  const navigate = useNavigate()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -13,8 +15,10 @@ export default function Navbar() {
     user,
     setUser,
     setLoginOpen,
-    setCartOpen
+    setCartOpen,
   } = useShop()
+
+  const [supaUser, setSupaUser] = useState(null)
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -28,6 +32,19 @@ export default function Navbar() {
       document.body.style.overflow = ''
     }
   }, [menuOpen])
+
+  // Check Supabase auth state
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setSupaUser(user)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSupaUser(session?.user ?? null)
+    })
+
+    return () => subscription?.unsubscribe()
+  }, [])
 
   const navLinks = [
     { to: '/', label: 'Home' },
@@ -52,6 +69,13 @@ export default function Navbar() {
     alert('Logged out successfully!')
     window.location.reload()
   }
+
+  const isLoggedIn = !!(supaUser || user)
+
+  // Get display name and avatar from user object
+  const displayName = user?.name || user?.account_name || supaUser?.user_metadata?.full_name || supaUser?.email?.split('@')[0] || 'User'
+  const avatarUrl = user?.avatar_url || supaUser?.user_metadata?.avatar_url || ''
+  const avatarInitial = (displayName || 'U').charAt(0).toUpperCase()
 
   return (
     <>
@@ -106,17 +130,26 @@ export default function Navbar() {
                 {isDark ? '☀️' : '🌙'}
               </button>
 
-              {user || isAdmin ? (
-                <button
-                  className="navbar-shop-login"
-                  onClick={handleLogout}
-                >
-                  🚪 Logout
-                </button>
+              {isLoggedIn ? (
+                <div className="navbar-user-menu">
+                  <button
+                    className="navbar-user-btn"
+                    onClick={() => navigate('/user-dashboard')}
+                  >
+                    <div className="navbar-user-avatar">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt={displayName} />
+                      ) : (
+                        <span className="navbar-user-initial">{avatarInitial}</span>
+                      )}
+                    </div>
+                    <span className="navbar-user-name">{displayName}</span>
+                  </button>
+                </div>
               ) : (
                 <button
                   className="navbar-shop-login"
-                  onClick={() => setLoginOpen(true)}
+                  onClick={() => navigate('/login')}
                 >
                   Login
                 </button>
@@ -185,14 +218,42 @@ export default function Navbar() {
           </NavLink>
         )}
 
-        <Link
-          to="/contact"
-          className="btn btn-primary"
-          style={{ marginTop: '16px' }}
-          onClick={() => setMenuOpen(false)}
-        >
-          Get Started
-        </Link>
+        {isLoggedIn ? (
+          <>
+            <div className="mobile-user-info">
+              <div className="navbar-user-avatar large">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={displayName} />
+                ) : (
+                  <span className="navbar-user-initial">{avatarInitial}</span>
+                )}
+              </div>
+              <span className="mobile-user-name">{displayName}</span>
+            </div>
+            <NavLink
+              to="/user-dashboard"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                color: 'var(--text-primary)',
+                textDecoration: 'none',
+                padding: '12px 40px'
+              }}
+            >
+              Dashboard
+            </NavLink>
+          </>
+        ) : (
+          <Link
+            to="/login"
+            className="btn btn-primary"
+            style={{ marginTop: '16px' }}
+            onClick={() => setMenuOpen(false)}
+          >
+            Login
+          </Link>
+        )}
 
       </div>
     </>

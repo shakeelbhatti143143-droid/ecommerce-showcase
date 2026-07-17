@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { products, sizes, shoeSizes, colors } from '../data/products'
 import { useShop } from '../context/ShopContext'
-
+import { signInWithGoogle } from "../services/shopAuth";
 function ProductCard({ product }) {
   const isShoe = product.category === 'Shoes'
   const [size, setSize] = useState(isShoe ? '42' : 'Medium')

@@ -15,11 +15,12 @@ function normalizeShopper(user) {
     account_email: user.email,
     name: user.user_metadata?.name || user.email?.split("@")[0],
     email: user.email,
+    id: user.id,
   };
 }
 
 // ==========================
-// CREATE NEW ACCOUNT
+// CREATE ACCOUNT
 // ==========================
 export async function createShopAccount({ name, email, password }) {
   if (!configured) {
@@ -34,6 +35,7 @@ export async function createShopAccount({ name, email, password }) {
     options: {
       data: {
         name: name.trim(),
+        full_name: name.trim(),
       },
     },
   });
@@ -70,7 +72,6 @@ export async function authenticateShopper({ email, password }) {
     };
   }
 
-  // Check Admin Login
   const adminResult = await verifyAdminCredentials({ email, password });
 
   if (adminResult.data) {
@@ -91,7 +92,21 @@ export async function authenticateShopper({ email, password }) {
 }
 
 // ==========================
-// FORGOT PASSWORD
+// GOOGLE LOGIN
+// ==========================
+export async function signInWithGoogle() {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${window.location.origin}/user-dashboard`,
+    },
+  });
+
+  return { data, error };
+}
+
+// ==========================
+// RESET PASSWORD
 // ==========================
 export async function resetShopPassword(email) {
   if (!configured) {
@@ -148,4 +163,88 @@ export async function updateShopPassword(newPassword) {
 // ==========================
 export async function logoutShopper() {
   await supabase.auth.signOut();
+}
+
+// ==========================
+// PROFILE: GET PROFILE
+// ==========================
+export async function getProfile(userId) {
+  if (!configured) return { error: "Supabase is not configured." };
+
+  // Try to fetch existing profile
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    return { error: message(error) };
+  }
+
+  return { data };
+}
+
+// ==========================
+// PROFILE: CREATE OR UPDATE
+// ==========================
+export async function upsertProfile(profile) {
+  if (!configured) return { error: "Supabase is not configured." };
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .upsert(profile, { onConflict: "id" })
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    return { error: message(error) };
+  }
+
+  return { data };
+}
+
+// ==========================
+// PROFILE: UPLOAD AVATAR
+// ==========================
+export async function uploadAvatar(userId, file) {
+  if (!configured) return { error: "Supabase is not configured." };
+
+  const fileExt = file.name.split(".").pop();
+  const filePath = `${userId}/avatar.${fileExt}`;
+
+  // Upload the file to the avatars bucket
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(filePath, file, { upsert: true });
+
+  if (uploadError) {
+    return { error: message(uploadError) };
+  }
+
+  // Get the public URL
+  const { data: urlData } = supabase.storage
+    .from("avatars")
+    .getPublicUrl(filePath);
+
+  return { data: { avatar_url: urlData.publicUrl, filePath } };
+}
+
+// ==========================
+// PROFILE: DELETE AVATAR
+// ==========================
+export async function deleteAvatar(filePath) {
+  if (!configured) return { error: "Supabase is not configured." };
+
+  if (!filePath) return { error: "No avatar file path provided." };
+
+  const { error } = await supabase.storage
+    .from("avatars")
+    .remove([filePath]);
+
+  if (error) {
+    return { error: message(error) };
+  }
+
+  return { data: true };
 }

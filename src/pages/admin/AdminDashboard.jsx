@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import emailjs from '@emailjs/browser'
 import adminProfileImage from '../../assets/admin-profile.jpg'
 import { safeFetch, safeDelete } from '../../services/supabase'
+import { supabase } from '../../assets/subabaseclient'
 import {
     getAllMergedContacts,
     getAllMergedNewsletters,
@@ -226,8 +227,14 @@ export default function AdminDashboard() {
     }, [activeTab, contacts])
 
     const handleLogout = () => {
+        // Clear all admin auth state
         localStorage.removeItem('isAdmin')
         localStorage.removeItem('admin-auth')
+        localStorage.removeItem('user')
+        localStorage.removeItem('shopsphere_shopper')
+        localStorage.removeItem('loggedIn')
+        // Clear Supabase session
+        supabase.auth.signOut()
         navigate('/')
     }
 
@@ -767,6 +774,9 @@ export default function AdminDashboard() {
                         )}
                         <button className="admin-btn-refresh" onClick={fetchData} title="Refresh data">
                             🔄 Refresh
+                        </button>
+                        <button className="admin-btn-logout-topbar" onClick={handleLogout} title="Logout">
+                            🚪 Logout
                         </button>
                         <span className="admin-topbar-time">
                             {new Date().toLocaleTimeString()}

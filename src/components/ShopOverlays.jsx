@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useShop } from '../context/ShopContext'
-
+import { signInWithGoogle } from "../services/shopAuth";
 export default function ShopOverlays() {
  const {
   loginOpen,
@@ -26,7 +26,19 @@ export default function ShopOverlays() {
   const [submitting, setSubmitting] = useState(false)
   const submit = async (event) => { event.preventDefault(); setSubmitting(true); setError(''); const result = await login({ email, password, name, createAccount: mode === 'create' }); setSubmitting(false); if (result.error) return setError(result.error); setPassword('') }
   return <>
-    {loginOpen && <div className="shop-overlay" role="dialog" aria-modal="true"><div className="shop-login-modal"><button className="shop-modal-close" onClick={() => setLoginOpen(false)}>x</button><p className="shop-kicker">{mode === 'create' ? 'Create your account' : 'Welcome back'}</p><h2>{mode === 'create' ? 'Start shopping with ShopSphere' : 'Login to continue shopping'}</h2><p className="shop-modal-copy">Your account and login details are securely verified through Supabase.</p><form onSubmit={submit}>{mode === 'create' && <label>Name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" required /></label>}<label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required /></label><label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" minLength="6" required /></label>{error && <p className="shop-form-error" role="alert">{error}</p>}<button className="btn btn-primary shop-full-btn" type="submit" disabled={submitting}>{submitting ? 'Please wait...' : mode === 'create' ? 'Create Account' : 'Login'}</button></form><div className="shop-modal-links"><button
+    {loginOpen && <div className="shop-overlay" role="dialog" aria-modal="true"><div className="shop-login-modal"><button className="shop-modal-close" onClick={() => setLoginOpen(false)}>x</button><p className="shop-kicker">{mode === 'create' ? 'Create your account' : 'Welcome back'}</p><h2>{mode === 'create' ? 'Start shopping with ShopSphere' : 'Login to continue shopping'}</h2><p className="shop-modal-copy">Your account and login details are securely verified through Supabase.</p><form onSubmit={submit}>{mode === 'create' && <label>Name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" required /></label>}<label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required /></label><label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" minLength="6" required /></label>{error && <p className="shop-form-error" role="alert">{error}</p>}<button className="btn btn-primary shop-full-btn" type="submit" disabled={submitting}>{submitting ? 'Please wait...' : mode === 'create' ? 'Create Account' : 'Login'}</button><button
+  type="button"
+  className="btn shop-full-btn"
+  style={{
+    marginTop: "10px",
+    background: "#ffffff",
+    color: "#333",
+    border: "1px solid #ccc"
+  }}
+  onClick={signInWithGoogle}
+>
+  Continue with Google
+</button></form><div className="shop-modal-links"><button
   onClick={() => forgotPassword(email)}
 >
   Forgot password?

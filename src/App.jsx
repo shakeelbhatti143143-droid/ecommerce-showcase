@@ -11,11 +11,15 @@ import Pricing from './pages/Pricing'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import Shop from './pages/Shop'
+import Login from './pages/auth/Login'
+import Signup from './pages/auth/Signup'
+import UserDashboard from './pages/UserDashboard'
 import { ShopProvider } from './context/ShopContext'
 import ShopOverlays from './components/ShopOverlays'
 import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminSettings from './pages/admin/AdminSettings'
+import UserProtectedRoute from "./components/UserProtectedRoute";
 import ProtectedRoute from './components/ProtectedRoute'
 import './index.css'
 
@@ -25,9 +29,11 @@ export const useTheme = () => useContext(ThemeContext)
 
 function ScrollToTop() {
   const { pathname } = useLocation()
+
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [pathname])
+
   return null
 }
 
@@ -38,9 +44,13 @@ function AppContent() {
   return (
     <>
       <ScrollToTop />
+
       {!isAdminRoute && <Navbar />}
+
       <main>
         <Routes>
+
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/features" element={<Features />} />
           <Route path="/features/:slug" element={<FeatureDetail />} />
@@ -48,19 +58,55 @@ function AppContent() {
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/shop" element={<Shop />} />
+
+          {/* Auth Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+
+          {/* User Dashboard (Protected) */}
+          <Route
+            path="/user-dashboard"
+            element={
+              <UserProtectedRoute>
+                <UserDashboard />
+              </UserProtectedRoute>
+            }
+          />
+
+          {/* Keep the old /dashboard route for backward compatibility */}
+          <Route
+            path="/dashboard"
+            element={
+              <UserProtectedRoute>
+                <UserDashboard />
+              </UserProtectedRoute>
+            }
+          />
+
+          {/* Admin */}
           <Route path="/admin" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={
-            <ProtectedRoute>
-              <AdminDashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/settings" element={
-            <ProtectedRoute>
-              <AdminSettings />
-            </ProtectedRoute>
-          } />
+
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute>
+                <AdminSettings />
+              </ProtectedRoute>
+            }
+          />
+
         </Routes>
       </main>
+
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && <BackToTop />}
       {!isAdminRoute && <ShopOverlays />}
@@ -82,7 +128,6 @@ export default function App() {
   }, [isDark])
 
   useEffect(() => {
-    // Simulate loading time - minimum 1.2 seconds for better UX
     const timer = setTimeout(() => {
       setLoading(false)
     }, 1200)
