@@ -95,7 +95,7 @@ ecommerce-showcase/
 
 ### Login Page (`/login`)
 - Enter email and password
-- **Admin check**: If email is `shakeelbhatti143143@gmail.com` and password is `1234qwerty` → redirects to `/admin/dashboard`
+- **Admin check**:Admin email and password redirects to `/admin/dashboard`
 - **Regular user**: Authenticates via Supabase Auth → redirects to `/user-dashboard`
 - Google OAuth button → authenticates via Supabase → redirects to `/user-dashboard`
 
