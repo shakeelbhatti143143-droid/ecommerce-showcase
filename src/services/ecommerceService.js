@@ -470,28 +470,34 @@ export function calculateShipping(country, city, subtotal) {
 // DASHBOARD STATS (Admin)
 // ===============================
 export async function getDashboardStats() {
-  const [orders, products, profiles] = await Promise.all([
-    supabase.from("orders").select("*"),
-    supabase.from("products").select("*", { count: "exact", head: true }),
-    supabase.from("profiles").select("*", { count: "exact", head: true }),
-  ]);
+  const { data: orders, error: ordersError } = await supabase
+    .from("orders")
+    .select("*");
 
-  const allOrders = orders.data || [];
+  console.log("Orders:", orders);
+  console.log("Orders Error:", ordersError);
+
+  const { count: productCount } = await supabase
+    .from("products")
+    .select("*", { count: "exact", head: true });
+
+  const { count: profileCount } = await supabase
+    .from("profiles")
+    .select("*", { count: "exact", head: true });
+
+  const allOrders = orders || [];
+
   const totalRevenue = allOrders.reduce(
     (sum, o) => sum + (o.status !== "cancelled" ? Number(o.total) : 0),
     0
   );
-  const totalOrders = allOrders.length;
-  const pendingOrders = allOrders.filter((o) => o.status === "pending").length;
-  const totalCustomers = profiles.count || 0;
-  const totalProducts = products.count || 0;
 
   return {
-    totalOrders,
+    totalOrders: allOrders.length,
     totalRevenue,
-    totalCustomers,
-    totalProducts,
-    pendingOrders,
+    totalCustomers: profileCount || 0,
+    totalProducts: productCount || 0,
+    pendingOrders: allOrders.filter((o) => o.status === "pending").length,
     recentOrders: allOrders.slice(0, 5),
   };
 }
