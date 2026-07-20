@@ -171,6 +171,8 @@ export default function Navbar() {
               <button
                 className={`hamburger ${menuOpen ? 'open' : ''}`}
                 onClick={() => setMenuOpen(!menuOpen)}
+                aria-label="Toggle menu"
+                aria-expanded={menuOpen}
               >
                 <span />
                 <span />
@@ -182,7 +184,11 @@ export default function Navbar() {
         </div>
       </nav>
 
-      <div className={`mobile-nav ${menuOpen ? 'open' : ''}`}>
+      <div 
+        className={`mobile-nav ${menuOpen ? 'open' : ''}`}
+        role="navigation"
+        aria-hidden={!menuOpen}
+      >
 
         <button
           className="theme-toggle"
@@ -261,6 +267,14 @@ export default function Navbar() {
             >
               My Orders
             </NavLink>
+            
+            <button
+              className="navbar-cart"
+              onClick={() => { setCartOpen(true); setMenuOpen(false) }}
+              style={{ marginTop: '8px' }}
+            >
+              🛒 Cart <b>{cart.reduce((sum, item) => sum + item.quantity, 0)}</b>
+            </button>
           </>
         ) : (
           <Link
