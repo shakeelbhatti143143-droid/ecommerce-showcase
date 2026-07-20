@@ -92,35 +92,6 @@ export default function Navbar() {
               Shop<span className="accent">Sphere</span>
             </Link>
 
-            <ul className="navbar-links">
-              {navLinks.map(link => (
-                <li key={link.to}>
-                  <NavLink
-                    to={link.to}
-                    end={link.to === '/'}
-                    className={({ isActive }) =>
-                      isActive ? 'active' : ''
-                    }
-                  >
-                    {link.label}
-                  </NavLink>
-                </li>
-              ))}
-
-              {isAdmin && (
-                <li>
-                  <NavLink
-                    to="/admin/dashboard"
-                    className={({ isActive }) =>
-                      isActive ? 'active' : ''
-                    }
-                  >
-                    🔐 Dashboard
-                  </NavLink>
-                </li>
-              )}
-            </ul>
-
             <div className="navbar-actions">
 
               <button
@@ -202,22 +173,7 @@ export default function Navbar() {
           </NavLink>
         ))}
 
-        {isAdmin && (
-          <NavLink
-            to="/admin/dashboard"
-            onClick={() => setMenuOpen(false)}
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              color: 'var(--text-primary)',
-              textDecoration: 'none',
-              padding: '12px 40px'
-            }}
-          >
-            🔐 Dashboard
-          </NavLink>
-        )}
-
+  
         {isLoggedIn ? (
           <>
             <div className="mobile-user-info">

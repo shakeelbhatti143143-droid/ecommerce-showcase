@@ -282,7 +282,6 @@ export async function updatePaymentStatus(orderId, paymentStatus) {
     .update({ payment_status: paymentStatus, updated_at: new Date().toISOString() })
     .eq("id", orderId)
     .select()
-    .single();
   if (error) throw error;
   return data;
 }
