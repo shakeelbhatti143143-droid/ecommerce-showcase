@@ -818,71 +818,8 @@ h6 {
 }
 
 /* ========================
-    Responsive
-    ======================== */
-@media (max-width: 1024px) {
-  .navbar-links {
-    display: none;
-  }
-
-  .hamburger {
-    display: flex;
-  }
-
-  .mobile-nav {
-    display: flex;
-  }
-}
-
-@media (max-width: 768px) {
-  .navbar-actions {
-    gap: 8px;
-  }
-
-  .navbar-shop-login,
-  .navbar-cart {
-    padding: 8px 12px;
-    font-size: 0.82rem;
-  }
-
-  .navbar-user-btn {
-    padding: 5px 10px 5px 5px;
-  }
-
-  .navbar-user-name {
-    max-width: 80px;
-    font-size: 0.82rem;
-  }
-
-  .navbar-cart b {
-    min-width: 18px;
-    height: 18px;
-    font-size: 0.62rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .navbar-logo {
-    font-size: 1.2rem;
-  }
-
-  .navbar-logo-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    font-size: 0.95rem;
-  }
-
-  .theme-toggle {
-    width: 36px;
-    height: 36px;
-    font-size: 0.9rem;
-  }
-}
-
-/* ========================
-    Section Headers
-    ======================== */
+   Section Headers
+   ======================== */
 .section-header {
   text-align: center;
   margin-bottom: 64px;
