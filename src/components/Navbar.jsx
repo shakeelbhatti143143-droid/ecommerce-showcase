@@ -223,7 +223,25 @@ export default function Navbar() {
           </NavLink>
         )}
 
-            {isLoggedIn ? (
+        {isLoggedIn && (
+          <button
+            className="navbar-cart"
+            onClick={() => {
+              setCartOpen(true)
+              setMenuOpen(false)
+            }}
+            style={{
+              marginTop: '12px',
+              padding: '12px 28px',
+              fontSize: '1.1rem'
+            }}
+          >
+            🛒 <span>Cart</span>
+            <b>{cart.reduce((sum, item) => sum + item.quantity, 0)}</b>
+          </button>
+        )}
+
+        {isLoggedIn ? (
           <>
             <div className="mobile-user-info">
               <div className="navbar-user-avatar large">
