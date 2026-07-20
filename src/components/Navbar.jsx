@@ -14,7 +14,6 @@ export default function Navbar() {
     cart,
     user,
     setUser,
-    setLoginOpen,
     setCartOpen,
   } = useShop()
 
@@ -145,6 +144,10 @@ export default function Navbar() {
                     </div>
                     <span className="navbar-user-name">{displayName}</span>
                   </button>
+                  <div className="navbar-user-dropdown">
+                    <button onClick={() => { navigate('/user-dashboard'); setMenuOpen(false) }}>Dashboard</button>
+                    <button onClick={() => { navigate('/my-orders'); setMenuOpen(false) }}>My Orders</button>
+                  </div>
                 </div>
               ) : (
                 <button
@@ -155,13 +158,15 @@ export default function Navbar() {
                 </button>
               )}
 
-              <button
-                className="navbar-cart"
-                onClick={() => setCartOpen(true)}
-              >
-                🛒 <span>Cart</span>
-                <b>{cart.reduce((sum, item) => sum + item.quantity, 0)}</b>
-              </button>
+              {isLoggedIn && (
+                <button
+                  className="navbar-cart"
+                  onClick={() => setCartOpen(true)}
+                >
+                  🛒 <span>Cart</span>
+                  <b>{cart.reduce((sum, item) => sum + item.quantity, 0)}</b>
+                </button>
+              )}
 
               <button
                 className={`hamburger ${menuOpen ? 'open' : ''}`}
@@ -218,7 +223,7 @@ export default function Navbar() {
           </NavLink>
         )}
 
-        {isLoggedIn ? (
+            {isLoggedIn ? (
           <>
             <div className="mobile-user-info">
               <div className="navbar-user-avatar large">
@@ -242,6 +247,19 @@ export default function Navbar() {
               }}
             >
               Dashboard
+            </NavLink>
+            <NavLink
+              to="/my-orders"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                color: 'var(--text-primary)',
+                textDecoration: 'none',
+                padding: '12px 40px'
+              }}
+            >
+              My Orders
             </NavLink>
           </>
         ) : (

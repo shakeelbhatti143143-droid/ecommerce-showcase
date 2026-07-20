@@ -1,12 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../assets/subabaseclient";
+import { useShop } from "../../context/ShopContext";
+import { signInWithGoogle as googleSignIn } from "../../services/shopAuth";
+import { ADMIN_EMAIL, isAdminEmail, setStoredRole } from "../../services/auth";
 import { persistAdminSession } from "../../services/adminAuth";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login, forgotPassword } = useShop();
+
+  // Check user after Google OAuth redirect
+  useEffect(() => {
+    async function checkUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        if (user.email === ADMIN_EMAIL) {
+          persistAdminSession({
+            email: user.email,
+            name: user.user_metadata?.full_name || "Admin",
+          });
+          navigate("/admin/dashboard", { replace: true });
+        } else {
+          navigate("/user-dashboard", { replace: true });
+        }
+      }
+    }
+
+    checkUser();
+  }, [navigate]);
+
+  const handleGoogleLogin = async () => {
+    const { error } = await googleSignIn();
+    if (error) setError(error.message || "Google sign-in failed.");
+  };
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mode, setMode] = useState("login");
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -15,106 +49,197 @@ export default function Login() {
     setSubmitting(true);
     setError("");
 
-    const trimmedEmail = email.trim().toLowerCase();
-    const trimmedPassword = password.trim();
-
-    // Admin credentials check
-    if (trimmedEmail === "shakeelbhatti143143@gmail.com" && trimmedPassword === "1234qwerty") {
-      persistAdminSession({
-        name: "Admin",
-        email: trimmedEmail,
-      });
-      setSubmitting(false);
-      navigate("/admin/dashboard");
-      return;
-    }
-
-    // Regular user login via Supabase
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: trimmedEmail,
-      password: trimmedPassword,
+    const result = await login({
+      email,
+      password,
+      name,
+      createAccount: mode === "create",
     });
 
     setSubmitting(false);
 
-    if (authError) {
-      setError(authError.message);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
+    // Check if the logged-in user is admin
+    const userEmail = email.trim().toLowerCase();
+    if (isAdminEmail(userEmail)) {
+      setStoredRole("admin");
+      persistAdminSession({
+        name: result.data?.account_name || "Admin",
+        email: userEmail,
+      });
+      navigate("/admin/dashboard");
       return;
     }
 
     navigate("/user-dashboard");
   };
 
-  const handleGoogleLogin = async () => {
-    const { error: authError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/user-dashboard`,
-      },
-    });
-
-    if (authError) {
-      setError(authError.message);
-    }
-  };
-
   return (
     <div className="auth-page">
       <div className="auth-container">
-        <div className="auth-card">
+        <div className="auth-card" style={{ maxWidth: "480px" }}>
           <div className="auth-header">
             <Link to="/" className="auth-logo">
               🛒 Shop<span className="accent">Sphere</span>
             </Link>
-            <h1>Welcome Back</h1>
-            <p>Sign in to your account to continue</p>
+            <span className="shop-kicker">
+              {mode === "create"
+                ? "Create your account"
+                : "Welcome back"}
+            </span>
+            <h1>
+              {mode === "create"
+                ? "Start shopping with ShopSphere"
+                : "Login to continue shopping"}
+            </h1>
+            <p>
+              Your account and login details are securely verified through
+              Supabase.
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="auth-form">
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
+          <form onSubmit={handleSubmit} className="auth-form" style={{ gap: "0" }}>
+            {mode === "create" && (
+              <label
+                style={{
+                  display: "grid",
+                  gap: "6px",
+                  margin: "13px 0",
+                  color: "var(--text-secondary)",
+                  fontSize: ".8rem",
+                  fontWeight: 700,
+                }}
+              >
+                Name
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
+                  required
+                  style={{
+                    padding: "12px",
+                    border: "1px solid var(--border-color)",
+                    borderRadius: "8px",
+                    background: "var(--bg-secondary)",
+                    color: "var(--text-primary)",
+                    font: "inherit",
+                  }}
+                />
+              </label>
+            )}
+
+            <label
+              style={{
+                display: "grid",
+                gap: "6px",
+                margin: "13px 0",
+                color: "var(--text-secondary)",
+                fontSize: ".8rem",
+                fontWeight: 700,
+              }}
+            >
+              Email
               <input
-                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
+                style={{
+                  padding: "12px",
+                  border: "1px solid var(--border-color)",
+                  borderRadius: "8px",
+                  background: "var(--bg-secondary)",
+                  color: "var(--text-primary)",
+                  font: "inherit",
+                }}
               />
-            </div>
+            </label>
 
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
+            <label
+              style={{
+                display: "grid",
+                gap: "6px",
+                margin: "13px 0",
+                color: "var(--text-secondary)",
+                fontSize: ".8rem",
+                fontWeight: 700,
+              }}
+            >
+              Password
               <input
-                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 minLength={6}
                 required
+                style={{
+                  padding: "12px",
+                  border: "1px solid var(--border-color)",
+                  borderRadius: "8px",
+                  background: "var(--bg-secondary)",
+                  color: "var(--text-primary)",
+                  font: "inherit",
+                }}
               />
-            </div>
+            </label>
 
-            {error && <p className="auth-error">{error}</p>}
+            {error && (
+              <p
+                className="auth-error"
+                style={{
+                  color: "#ef4444",
+                  fontSize: ".85rem",
+                  marginTop: "8px",
+                }}
+              >
+                {error}
+              </p>
+            )}
 
             <button
               type="submit"
-              className="btn btn-primary auth-submit"
+              className="btn btn-primary auth-submit shop-full-btn"
               disabled={submitting}
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                width: "100%",
+                marginTop: "20px",
+              }}
             >
-              {submitting ? "Signing in..." : "Sign In"}
+              {submitting
+                ? "Please wait..."
+                : mode === "create"
+                  ? "Create Account"
+                  : "Login"}
             </button>
           </form>
 
-          <div className="auth-divider">
+          <div className="auth-divider" style={{ margin: "24px 0" }}>
             <span>or continue with</span>
           </div>
 
           <button
             type="button"
-            className="btn auth-google-btn"
+            className="btn shop-full-btn"
             onClick={handleGoogleLogin}
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              width: "100%",
+              background: "#ffffff",
+              color: "#333",
+              border: "1px solid #ccc",
+              gap: "10px",
+              alignItems: "center",
+            }}
           >
             <svg viewBox="0 0 24 24" width="20" height="20">
               <path
@@ -137,12 +262,46 @@ export default function Login() {
             Continue with Google
           </button>
 
-          <p className="auth-footer-text">
-            Don't have an account?{" "}
-            <Link to="/signup" className="auth-link">
-              Sign Up
-            </Link>
-          </p>
+          <div
+            className="shop-modal-links"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: "10px",
+              marginTop: "18px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => forgotPassword(email)}
+              style={{
+                border: 0,
+                background: "transparent",
+                color: "var(--accent-light, #a78bfa)",
+                cursor: "pointer",
+                fontSize: ".78rem",
+              }}
+            >
+              Forgot password?
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === "login" ? "create" : "login");
+                setError("");
+              }}
+              style={{
+                border: 0,
+                background: "transparent",
+                color: "var(--accent-light, #a78bfa)",
+                cursor: "pointer",
+                fontSize: ".78rem",
+              }}
+            >
+              {mode === "login" ? "Create account" : "Already have an account?"}
+            </button>
+          </div>
+
         </div>
       </div>
     </div>

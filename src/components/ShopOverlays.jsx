@@ -1,23 +1,24 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useShop } from '../context/ShopContext'
 import { signInWithGoogle } from "../services/shopAuth";
 export default function ShopOverlays() {
- const {
-  loginOpen,
-  setLoginOpen,
-  cartOpen,
-  setCartOpen,
-  cart,
-  total,
-  updateQuantity,
-  order,
-  setOrder,
-  login,
-  forgotPassword,
-  toast,
-  setToast
-} = useShop();
+  const navigate = useNavigate();
+  const {
+   loginOpen,
+   setLoginOpen,
+   cartOpen,
+   setCartOpen,
+   cart,
+   total,
+   updateQuantity,
+   order,
+   setOrder,
+   login,
+   forgotPassword,
+   toast,
+   setToast
+  } = useShop();
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mode, setMode] = useState('login')
@@ -43,7 +44,7 @@ export default function ShopOverlays() {
 >
   Forgot password?
 </button><button onClick={() => { setMode(mode === 'login' ? 'create' : 'login'); setError('') }}>{mode === 'login' ? 'Create account' : 'Already have an account?'}</button></div><p className="shop-modal-copy" style={{ marginTop: '12px' }}>Admin? <Link to="/admin" onClick={() => setLoginOpen(false)}>Open admin portal</Link></p></div></div>}
-    {cartOpen && <div className="shop-drawer-wrap"><button className="shop-drawer-backdrop" onClick={() => setCartOpen(false)} /><aside className="shop-cart-drawer"><header><div><span className="shop-kicker">Your selection</span><h2>Your Cart ({cart.length})</h2></div><button className="shop-modal-close" onClick={() => setCartOpen(false)}>x</button></header>{cart.length === 0 ? <div className="shop-empty-cart">Your cart is waiting for something great.</div> : <><div className="shop-cart-items">{cart.map((item) => <article key={item.key}><img src={item.image} alt="" /><div><h3>{item.name}</h3><p>{item.size}{item.color ? ` / ${item.color}` : ''}</p><strong>${item.price * item.quantity}</strong><div className="shop-quantity compact"><button onClick={() => updateQuantity(item.key, item.quantity - 1)}>-</button><span>{item.quantity}</span><button onClick={() => updateQuantity(item.key, item.quantity + 1)}>+</button></div></div></article>)}</div><footer><div><span>Total</span><strong>${total}</strong></div><button className="btn btn-primary shop-full-btn" onClick={() => { setCartOpen(false); setToast('Checkout is ready.') }}>Checkout</button></footer></>}</aside></div>}
+    {cartOpen && <div className="shop-drawer-wrap"><button className="shop-drawer-backdrop" onClick={() => setCartOpen(false)} /><aside className="shop-cart-drawer"><header><div><span className="shop-kicker">Your selection</span><h2>Your Cart ({cart.length})</h2></div><button className="shop-modal-close" onClick={() => setCartOpen(false)}>x</button></header>{cart.length === 0 ? <div className="shop-empty-cart">Your cart is waiting for something great.</div> : <><div className="shop-cart-items">{cart.map((item) => <article key={item.key}><img src={item.image} alt="" /><div><h3>{item.name}</h3><p>{item.size}{item.color ? ` / ${item.color}` : ''}</p><strong>${item.price * item.quantity}</strong><div className="shop-quantity compact"><button onClick={() => updateQuantity(item.key, item.quantity - 1)}>-</button><span>{item.quantity}</span><button onClick={() => updateQuantity(item.key, item.quantity + 1)}>+</button></div></div></article>)}</div><footer><div><span>Total</span><strong>${total}</strong></div><button className="btn btn-primary shop-full-btn" onClick={() => { setCartOpen(false); navigate('/checkout'); }}>Checkout</button></footer></>}</aside></div>}
     {order && <div className="shop-overlay" role="dialog" aria-modal="true"><div className="shop-order-modal"><button className="shop-modal-close" onClick={() => setOrder(null)}>x</button><span className="shop-kicker">Order summary</span><h2>Review your order</h2><div className="shop-order-product"><img src={order.image} alt="" /><div><h3>{order.name}</h3><p>Size: {order.size}</p>{order.color && <p>Color: {order.color}</p>}<p>Quantity: {order.quantity}</p></div></div><div className="shop-order-total"><span>Total</span><strong>${order.price * order.quantity}</strong></div><button className="btn btn-primary shop-full-btn" onClick={() => { setOrder(null); setToast('Order confirmed.') }}>Confirm Order</button></div></div>}
     {toast && <div className="shop-toast" role="status">{toast}</div>}
   </>

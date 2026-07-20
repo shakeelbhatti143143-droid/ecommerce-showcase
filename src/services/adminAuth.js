@@ -38,7 +38,7 @@ export async function verifyAdminCredentials({ email, password }) {
 // ===============================
 // SAVE SESSION
 // ===============================
-export function persistAdminSession(user) {
+export async function persistAdminSession(user) {
   localStorage.setItem("isAdmin", "true");
 
   localStorage.setItem(
@@ -49,6 +49,27 @@ export function persistAdminSession(user) {
       timestamp: Date.now(),
     })
   );
+
+  // Ensure the admin profile has is_admin = true in the database
+  // This is required for RLS policies to grant admin access to orders and products
+  try {
+    if (user.id) {
+      const { supabase } = await import("../assets/subabaseclient");
+      await supabase
+        .from("profiles")
+        .upsert(
+          {
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0],
+            is_admin: true,
+          },
+          { onConflict: "id" }
+        );
+    }
+  } catch (err) {
+    console.error("Failed to update admin profile:", err);
+  }
 }
 
 // ===============================

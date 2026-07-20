@@ -39,7 +39,7 @@ export default function AdminLogin() {
         return;
       }
 
-      persistAdminSession(data.user);
+      await persistAdminSession(data.user);
 
       navigate("/admin/dashboard");
     } catch (err) {

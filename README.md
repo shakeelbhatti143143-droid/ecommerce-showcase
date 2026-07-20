@@ -13,11 +13,31 @@ A responsive e-commerce platform showcase built with React and Vite. Features fu
 
 ### Admin Features
 - Admin login (hardcoded credentials for demo)
-- Dashboard with stats, messages, newsletter subscribers
+- Dashboard with stats (messages, subscribers, **orders, revenue, customers, products, pending orders**)
+- **Order Management**: view all orders, search by order #/name/email, filter by status, update order status (pending → confirmed → processing → shipped → delivered → cancelled) and payment status
+- **Product Management**: add/edit/delete products with image upload (Supabase Storage `product-images` bucket), stock, featured/active flags
+- **Category Management**: full CRUD for categories
+- **Users**: view all registered users with order counts and role
 - Approve/email contact messages via EmailJS
 - Delete messages and subscribers
 - Database schema viewer
 - Logout button in topbar and sidebar
+
+### E-Commerce Workflow
+- Shopping cart persisted in `localStorage` for guests and synced to Supabase for logged-in users; navbar shows live item count
+- Email/Password + Google authentication required before checkout
+- Checkout collects shipping details (validated), shows order summary with images, applies coupons, and computes subtotal/shipping/discount/total
+- Orders saved with a unique order number; each item saved to `order_items`; a `payments` row is created (COD = pending)
+- Inventory stock decremented automatically; out-of-stock purchases blocked; order confirmation email sent to customer and new-order notification to admin (EmailJS/Resend ready)
+- "My Orders" page with order details and status
+- Coupons (percentage/fixed), shipping rules (free/flat/city-based), and Cash-on-Delivery payment (Stripe/PayPal structured for later)
+
+### Email Notifications
+After each order, `src/services/emailService.js` sends:
+- **Customer**: order confirmation (order #, items, total)
+- **Admin**: new order notification
+
+Configure EmailJS via `VITE_EMAILJS_*` (already present in `.env`), or set `VITE_RESEND_FUNCTION_URL` for Resend Edge Function delivery. If neither is configured, the payload is logged and checkout continues.
 
 ### Public Pages
 - Home, Features (with detail pages), Pricing, About, Contact
@@ -186,7 +206,10 @@ Restart the Vite server whenever `.env` changes.
 
 ### 3. Set up Supabase tables
 
-Run the SQL above for the `profiles` table, plus the existing tables:
+Run the full e-commerce schema in `supabase/ecommerce-schema.sql` in the Supabase SQL Editor. It creates:
+`profiles`, `categories`, `products`, `cart`, `orders`, `order_items`, `addresses`, `coupons`, `payments`, `inventory_log` — with primary/foreign keys, indexes, constraints, RLS policies, helper functions, triggers, seed categories, and the `product-images` storage bucket.
+
+Also create a **public** Storage bucket named `product-images` (the SQL attempts this automatically; otherwise do it in the dashboard) so the admin product uploader can store images.
 
 ```sql
 CREATE TABLE contact (
@@ -250,7 +273,7 @@ OPEN: https://ecommerce-showcase-silk.vercel.app/
 | `/user-dashboard` | Auth required | User dashboard |
 | `/dashboard` | Auth required | Backward compatible alias |
 | `/admin` | Public | Admin login |
-| `/admin/dashboard` | Admin auth | Admin dashboard |
+| `/admin/dashboard` | Admin auth | Admin dashboard (Orders, Products, Categories, Users, Messages, Subscribers) |
 | `/admin/settings` | Admin auth | Admin settings |
 
 ## Deployment

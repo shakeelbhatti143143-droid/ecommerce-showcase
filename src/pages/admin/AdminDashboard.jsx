@@ -4,6 +4,11 @@ import emailjs from '@emailjs/browser'
 import adminProfileImage from '../../assets/admin-profile.jpg'
 import { safeFetch, safeDelete } from '../../services/supabase'
 import { supabase } from '../../assets/subabaseclient'
+import { getDashboardStats } from '../../services/ecommerceService'
+import AdminOrders from './AdminOrders'
+import AdminProducts from './AdminProducts'
+import AdminCategories from './AdminCategories'
+import AdminUsers from './AdminUsers'
 import {
     getAllMergedContacts,
     getAllMergedNewsletters,
@@ -12,6 +17,20 @@ import {
     markLocalContactRead,
     getAdminProfile
 } from '../../services/localStore'
+import {
+    getAllOrders,
+    updateOrderStatus,
+    getProducts,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    getCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory
+} from '../../services/ecommerceService'
+import ProductModal from '../../components/admin/ProductModal'
+import CategoryModal from '../../components/admin/CategoryModal'
 function StatCard({ icon, label, value, color }) {
     return (
         <div className="admin-stat-card">
@@ -124,6 +143,15 @@ export default function AdminDashboard() {
         } catch { return [] }
     })
 
+    // E-commerce state
+    const [orders, setOrders] = useState([])
+    const [products, setProducts] = useState([])
+    const [categories, setCategories] = useState([])
+    const [stats, setStats] = useState(null)
+    const [orderFilter, setOrderFilter] = useState('all')
+    const [editingProduct, setEditingProduct] = useState(null)
+    const [editingCategory, setEditingCategory] = useState(null)
+
     const showToast = useCallback((msg, type = 'success') => {
         setToast({ show: true, msg, type })
         setTimeout(() => setToast(t => ({ ...t, show: false })), 4000)
@@ -151,6 +179,24 @@ export default function AdminDashboard() {
         }
     }, [showToast])
 
+    const fetchEcommerceData = useCallback(async () => {
+        try {
+            const [ordersData, productsData, categoriesData, statsData] = await Promise.all([
+                getAllOrders({}),
+                getProducts({}),
+                getCategories(),
+                getDashboardStats(),
+            ])
+            setOrders(ordersData || [])
+            setProducts(productsData || [])
+            setCategories(categoriesData || [])
+            setStats(statsData)
+        } catch (err) {
+            console.error('Error fetching e-commerce data:', err)
+            showToast('Failed to load e-commerce data.', 'error')
+        }
+    }, [showToast])
+
     useEffect(() => {
         const auth = localStorage.getItem('admin-auth')
         if (!auth) {
@@ -164,7 +210,8 @@ export default function AdminDashboard() {
             navigate('/admin')
         }
         fetchData()
-    }, [navigate, fetchData])
+        fetchEcommerceData()
+    }, [navigate, fetchData, fetchEcommerceData])
 
     useEffect(() => {
         const handleProfileUpdate = (event) => setProfilePicture(event.detail?.picture || null)
@@ -207,6 +254,12 @@ export default function AdminDashboard() {
         const interval = setInterval(fetchData, 30000)
         return () => clearInterval(interval)
     }, [fetchData])
+
+    useEffect(() => {
+        // Refresh e-commerce data every 30 seconds
+        const interval = setInterval(fetchEcommerceData, 30000)
+        return () => clearInterval(interval)
+    }, [fetchEcommerceData])
 
     // Auto-mark messages as read when admin visits messages tab
     useEffect(() => {
@@ -353,11 +406,19 @@ export default function AdminDashboard() {
 
     const renderDashboard = () => (
         <div className="admin-dashboard-grid">
+            {stats && (
+                <>
+                    <StatCard icon="📦" label="Total Orders" value={stats.totalOrders || 0} color="#3b82f6" />
+                    <StatCard icon="💰" label="Total Revenue" value={`$${(stats.totalRevenue || 0).toFixed(2)}`} color="#10b981" />
+                    <StatCard icon="👥" label="Total Customers" value={stats.totalCustomers || 0} color="#f59e0b" />
+                    <StatCard icon="🛍️" label="Total Products" value={stats.totalProducts || 0} color="#8b5cf6" />
+                    <StatCard icon="⏳" label="Pending Orders" value={stats.pendingOrders || 0} color="#ef4444" />
+                </>
+            )}
             <StatCard icon="📬" label="Total Messages" value={contacts.length} color="#7c3aed" />
             <StatCard icon="📧" label="Newsletter Subs" value={newsletters.length} color="#6366f1" />
             <StatCard icon="📩" label="Unread Messages" value={contacts.filter(c => !c.read).length} color="#f59e0b" />
             <StatCard icon="✅" label="Approved Messages" value={approvedIds.length} color="#10b981" />
-            <StatCard icon="👥" label="Unique Emails" value={new Set([...contacts.map(c => c.email), ...newsletters.map(n => n.email)]).size} color="#10b981" />
 
             <div className="admin-recent-section">
                 <h3>Recent Contact Messages</h3>
@@ -578,6 +639,182 @@ export default function AdminDashboard() {
         </div>
     )
 
+    const renderOrders = () => (
+        <div className="admin-orders-section">
+            <div className="admin-section-header">
+                <h3>Orders ({orders.length})</h3>
+                <div className="admin-filter-bar">
+                    <select
+                        value={orderFilter}
+                        onChange={(e) => setOrderFilter(e.target.value)}
+                        className="admin-filter-select"
+                    >
+                        <option value="all">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="processing">Processing</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+            <div className="admin-table-wrapper">
+                <table className="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {orders.length === 0 ? (
+                            <tr>
+                                <td colSpan={9} className="admin-empty">No orders yet.</td>
+                            </tr>
+                        ) : orders.map((order) => (
+                            <tr key={order.id}>
+                                <td><strong>{order.order_number}</strong></td>
+                                <td>{order.customer_name}</td>
+                                <td>{order.customer_email}</td>
+                                <td>{order.customer_phone}</td>
+                                <td>{formatDate(order.created_at)}</td>
+                                <td>${parseFloat(order.total).toFixed(2)}</td>
+                                <td>
+                                    <span className={`admin-badge status-${order.status || 'pending'}`}>
+                                        {order.status || 'pending'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span className={`admin-badge ${order.payment_status === 'paid' ? 'badge-paid' : 'badge-pending'}`}>
+                                        {order.payment_status || 'pending'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <select
+                                        value={order.status}
+                                        onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                                        className="admin-filter-select"
+                                    >
+                                        <option value="pending">Pending</option>
+                                        <option value="confirmed">Confirmed</option>
+                                        <option value="processing">Processing</option>
+                                        <option value="shipped">Shipped</option>
+                                        <option value="delivered">Delivered</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    )
+
+    const renderProducts = () => (
+        <div className="admin-products-section">
+            <div className="admin-section-header">
+                <h3>Products ({products.length})</h3>
+                <button className="btn btn-primary" onClick={() => setEditingProduct({})}>Add Product</button>
+            </div>
+            <div className="admin-table-wrapper">
+                <table className="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {products.length === 0 ? (
+                            <tr>
+                                <td colSpan={7} className="admin-empty">No products yet.</td>
+                            </tr>
+                        ) : products.map((product) => (
+                            <tr key={product.id}>
+                                <td><img src={product.image || 'https://via.placeholder.com/40'} alt={product.name} className="admin-product-thumb" /></td>
+                                <td><strong>{product.name}</strong></td>
+                                <td>{product.category}</td>
+                                <td>${parseFloat(product.price).toFixed(2)}</td>
+                                <td>{product.stock}</td>
+                                <td>
+                                    <span className={`admin-badge ${product.active ? 'badge-paid' : 'badge-pending'}`}>
+                                        {product.active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div className="admin-action-group">
+                                        <button className="admin-btn-approve" onClick={() => setEditingProduct(product)} title="Edit">✏️</button>
+                                        <button className="admin-btn-delete" onClick={() => deleteProduct(product.id).then(() => { setProducts(products.filter(p => p.id !== product.id)); showToast('Product deleted', 'success') })} title="Delete">🗑️</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            {editingProduct && (
+                <ProductModal product={editingProduct} onClose={() => setEditingProduct(null)} onSave={async (data) => { if (data.id) { await updateProduct(data.id, data) } else { await createProduct(data) } setEditingProduct(null); fetchEcommerceData(); showToast('Product saved', 'success') }} />
+            )}
+        </div>
+    )
+
+    const renderCategories = () => (
+        <div className="admin-categories-section">
+            <div className="admin-section-header">
+                <h3>Categories ({categories.length})</h3>
+                <button className="btn btn-primary" onClick={() => setEditingCategory({})}>Add Category</button>
+            </div>
+            <div className="admin-table-wrapper">
+                <table className="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Slug</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {categories.length === 0 ? (
+                            <tr>
+                                <td colSpan={4} className="admin-empty">No categories yet.</td>
+                            </tr>
+                        ) : categories.map((cat) => (
+                            <tr key={cat.id}>
+                                <td><strong>{cat.name}</strong></td>
+                                <td>{cat.slug}</td>
+                                <td>{cat.description}</td>
+                                <td>
+                                    <div className="admin-action-group">
+                                        <button className="admin-btn-approve" onClick={() => setEditingCategory(cat)} title="Edit">✏️</button>
+                                        <button className="admin-btn-delete" onClick={() => deleteCategory(cat.id).then(() => { setCategories(categories.filter(c => c.id !== cat.id)); showToast('Category deleted', 'success') })} title="Delete">🗑️</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            {editingCategory && (
+                <CategoryModal category={editingCategory} onClose={() => setEditingCategory(null)} onSave={async (data) => { if (data.id) { await updateCategory(data.id, data) } else { await createCategory(data) } setEditingCategory(null); fetchEcommerceData(); showToast('Category saved', 'success') }} />
+            )}
+        </div>
+    )
+
     const renderDatabase = () => (
         <div className="admin-database-section">
             <div className="admin-section-header">
@@ -715,6 +952,33 @@ export default function AdminDashboard() {
                         <span>📊</span> Dashboard
                     </button>
                     <button
+                        className={`admin-nav-item ${activeTab === 'orders' ? 'active' : ''}`}
+                        onClick={() => { setActiveTab('orders'); setMobileSidebarOpen(false) }}
+                    >
+                        <span>📦</span> Orders
+                        {orders.filter(o => o.status === 'pending').length > 0 && (
+                            <span className="admin-nav-badge">{orders.filter(o => o.status === 'pending').length}</span>
+                        )}
+                    </button>
+                    <button
+                        className={`admin-nav-item ${activeTab === 'products' ? 'active' : ''}`}
+                        onClick={() => { setActiveTab('products'); setMobileSidebarOpen(false) }}
+                    >
+                        <span>🛍️</span> Products
+                    </button>
+                    <button
+                        className={`admin-nav-item ${activeTab === 'categories' ? 'active' : ''}`}
+                        onClick={() => { setActiveTab('categories'); setMobileSidebarOpen(false) }}
+                    >
+                        <span>📂</span> Categories
+                    </button>
+                    <button
+                        className={`admin-nav-item ${activeTab === 'users' ? 'active' : ''}`}
+                        onClick={() => { setActiveTab('users'); setMobileSidebarOpen(false) }}
+                    >
+                        <span>👥</span> Users
+                    </button>
+                    <button
                         className={`admin-nav-item ${activeTab === 'messages' ? 'active' : ''}`}
                         onClick={() => { setActiveTab('messages'); setMobileSidebarOpen(false) }}
                     >
@@ -762,6 +1026,10 @@ export default function AdminDashboard() {
                     </button>
                     <h1>
                         {activeTab === 'dashboard' && '📊 Dashboard Overview'}
+                        {activeTab === 'orders' && '📦 Order Management'}
+                        {activeTab === 'products' && '🛍️ Product Management'}
+                        {activeTab === 'categories' && '📂 Category Management'}
+                        {activeTab === 'users' && '👥 Registered Users'}
                         {activeTab === 'messages' && '📬 Contact Messages'}
                         {activeTab === 'newsletter' && '📧 Newsletter Subscribers'}
                         {activeTab === 'database' && '🗄️ Database Access'}
@@ -793,6 +1061,10 @@ export default function AdminDashboard() {
                     ) : (
                         <>
                             {activeTab === 'dashboard' && renderDashboard()}
+                            {activeTab === 'orders' && <AdminOrders />}
+                            {activeTab === 'products' && <AdminProducts />}
+                            {activeTab === 'categories' && <AdminCategories />}
+                            {activeTab === 'users' && <AdminUsers />}
                             {activeTab === 'messages' && renderMessages()}
                             {activeTab === 'newsletter' && renderNewsletters()}
                             {activeTab === 'database' && renderDatabase()}

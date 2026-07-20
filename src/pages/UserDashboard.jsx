@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../assets/subabaseclient";
 import { uploadAvatar, deleteAvatar, upsertProfile, getProfile } from "../services/shopAuth";
+import { persistAdminSession } from "../services/adminAuth";
+import { ADMIN_EMAIL } from "../services/auth";
 
 const HELP_FAQS = [
   {
@@ -53,6 +55,17 @@ export default function UserDashboard() {
 
     if (!user) {
       navigate("/login", { replace: true });
+      return;
+    }
+
+    // Redirect admin to admin dashboard
+    if (user.email === ADMIN_EMAIL) {
+      persistAdminSession({
+        email: user.email,
+        name: user.user_metadata?.full_name || "Admin",
+      });
+      localStorage.setItem("userRole", "admin");
+      navigate("/admin/dashboard", { replace: true });
       return;
     }
 

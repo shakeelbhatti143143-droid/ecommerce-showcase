@@ -1,15 +1,30 @@
 import React, { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { products, sizes, shoeSizes, colors } from '../data/products'
 import { useShop } from '../context/ShopContext'
-import { signInWithGoogle } from "../services/shopAuth";
 function ProductCard({ product }) {
+  const navigate = useNavigate()
   const isShoe = product.category === 'Shoes'
   const [size, setSize] = useState(isShoe ? '42' : 'Medium')
   const [color, setColor] = useState('Black')
   const [quantity, setQuantity] = useState(1)
-  const { addToCart, placeOrder } = useShop()
+  const { user, addToCart, placeOrder } = useShop()
   const selection = { size, color: isShoe ? color : '', quantity }
-  return <article className="shop-product-card"><div className="shop-product-image"><img src={product.image} alt={product.name} />{product.badge && <span>{product.badge}</span>}<button className="shop-wishlist" aria-label={`Add ${product.name} to wishlist`}>♡</button></div><div className="shop-product-info"><div className="shop-product-title"><div><p className="shop-category-label">{product.category}</p><h3>{product.name}</h3></div><strong>${product.price}</strong></div><p className="shop-rating">★★★★★ <small>{product.rating}</small></p><p className="shop-product-description">{product.description}</p>{isShoe && <label className="shop-option">Colour<select value={color} onChange={(event) => setColor(event.target.value)}>{colors.map((item) => <option key={item}>{item}</option>)}</select></label>}<label className="shop-option">Size<select value={size} onChange={(event) => setSize(event.target.value)}>{(isShoe ? shoeSizes : sizes).map((item) => <option key={item}>{item}</option>)}</select></label><div className="shop-card-actions"><div className="shop-quantity"><button aria-label="Decrease quantity" onClick={() => setQuantity(Math.max(1, quantity - 1))}>−</button><span>{quantity}</span><button aria-label="Increase quantity" onClick={() => setQuantity(quantity + 1)}>+</button></div><button className="btn btn-primary" onClick={() => addToCart(product, selection)}>Add to Cart</button></div><button className="shop-order-now" onClick={() => placeOrder(product, selection)}>Order Now →</button></div></article>
+  const handleAddToCart = () => {
+    if (!user) {
+      navigate('/login')
+      return
+    }
+    addToCart(product, selection)
+  }
+  const handleOrderNow = () => {
+    if (!user) {
+      navigate('/login')
+      return
+    }
+    placeOrder(product, selection)
+  }
+  return <article className="shop-product-card"><div className="shop-product-image"><img src={product.image} alt={product.name} />{product.badge && <span>{product.badge}</span>}<button className="shop-wishlist" aria-label={`Add ${product.name} to wishlist`}>♡</button></div><div className="shop-product-info"><div className="shop-product-title"><div><p className="shop-category-label">{product.category}</p><h3>{product.name}</h3></div><strong>${product.price}</strong></div><p className="shop-rating">★★★★★ <small>{product.rating}</small></p><p className="shop-product-description">{product.description}</p>{isShoe && <label className="shop-option">Colour<select value={color} onChange={(event) => setColor(event.target.value)}>{colors.map((item) => <option key={item}>{item}</option>)}</select></label>}<label className="shop-option">Size<select value={size} onChange={(event) => setSize(event.target.value)}>{(isShoe ? shoeSizes : sizes).map((item) => <option key={item}>{item}</option>)}</select></label><div className="shop-card-actions"><div className="shop-quantity"><button aria-label="Decrease quantity" onClick={() => setQuantity(Math.max(1, quantity - 1))}>−</button><span>{quantity}</span><button aria-label="Increase quantity" onClick={() => setQuantity(quantity + 1)}>+</button></div><button className="btn btn-primary" onClick={handleAddToCart}>Add to Cart</button></div><button className="shop-order-now" onClick={handleOrderNow}>Order Now →</button></div></article>
 }
 
 export default function Shop() {

@@ -11,8 +11,12 @@ import Pricing from './pages/Pricing'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import Shop from './pages/Shop'
+import Checkout from './pages/Checkout'
+import OrderSuccess from './pages/OrderSuccess'
+import MyOrders from './pages/MyOrders'
 import Login from './pages/auth/Login'
 import Signup from './pages/auth/Signup'
+import Callback from './pages/auth/Callback'
 import UserDashboard from './pages/UserDashboard'
 import { ShopProvider } from './context/ShopContext'
 import ShopOverlays from './components/ShopOverlays'
@@ -59,9 +63,15 @@ function AppContent() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/shop" element={<Shop />} />
 
+          {/* E-commerce Routes */}
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order-success/:orderId" element={<OrderSuccess />} />
+          <Route path="/my-orders" element={<MyOrders />} />
+
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/auth/callback" element={<Callback />} />
 
           {/* User Dashboard (Protected) */}
           <Route
