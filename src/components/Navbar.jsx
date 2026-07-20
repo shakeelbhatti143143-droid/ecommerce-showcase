@@ -45,6 +45,17 @@ export default function Navbar() {
     return () => subscription?.unsubscribe()
   }, [])
 
+  // Close mobile menu on Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && menuOpen) {
+        setMenuOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [menuOpen])
+
   const navLinks = [
     { to: '/', label: 'Home' },
     { to: '/shop', label: 'Shop' },
@@ -78,7 +89,10 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+      {/* Skip to main content for accessibility */}
+      <a href="#main-content" className="sr-only">Skip to main content</a>
+
+      <nav className={`navbar ${scrolled ? 'scrolled' : ''}`} role="navigation" aria-label="Main navigation">
         <div className="container">
           <div className="navbar-inner">
 
@@ -86,12 +100,13 @@ export default function Navbar() {
               to="/"
               className="navbar-logo"
               onClick={() => setMenuOpen(false)}
+              aria-label="ShopSphere Home"
             >
               <div className="navbar-logo-icon">🛒</div>
               Shop<span className="accent">Sphere</span>
             </Link>
 
-            <ul className="navbar-links">
+            <ul className="navbar-links" aria-label="Primary">
               {navLinks.map(link => (
                 <li key={link.to}>
                   <NavLink
@@ -125,6 +140,7 @@ export default function Navbar() {
               <button
                 className="theme-toggle"
                 onClick={() => setIsDark(!isDark)}
+                aria-label="Toggle theme"
               >
                 {isDark ? '☀️' : '🌙'}
               </button>
@@ -171,6 +187,8 @@ export default function Navbar() {
               <button
                 className={`hamburger ${menuOpen ? 'open' : ''}`}
                 onClick={() => setMenuOpen(!menuOpen)}
+                aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={menuOpen}
               >
                 <span />
                 <span />
@@ -182,8 +200,13 @@ export default function Navbar() {
         </div>
       </nav>
 
-      <div className={`mobile-nav ${menuOpen ? 'open' : ''}`}>
-
+      {/* Mobile Navigation */}
+      <div
+        className={`mobile-nav ${menuOpen ? 'open' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Mobile navigation menu"
+      >
         <button
           className="theme-toggle"
           style={{
@@ -192,6 +215,7 @@ export default function Navbar() {
             right: '24px'
           }}
           onClick={() => setIsDark(!isDark)}
+          aria-label="Toggle theme"
         >
           {isDark ? '☀️' : '🌙'}
         </button>
@@ -223,7 +247,7 @@ export default function Navbar() {
           </NavLink>
         )}
 
-            {isLoggedIn ? (
+        {isLoggedIn ? (
           <>
             <div className="mobile-user-info">
               <div className="navbar-user-avatar large">
@@ -272,7 +296,6 @@ export default function Navbar() {
             Login
           </Link>
         )}
-
       </div>
     </>
   )
