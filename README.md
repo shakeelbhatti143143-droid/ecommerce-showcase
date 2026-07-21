@@ -1,50 +1,102 @@
 # ShopSphere
 
-A responsive e-commerce platform showcase built with React and Vite. Features full user authentication (Email/Password + Google OAuth via Supabase), a user dashboard with profile management, and a mobile-friendly admin dashboard for reviewing and approving customer messages.
+A full-featured e-commerce platform showcase built with **React 18**, **Vite 8**, and **Supabase**. Features user authentication (Email/Password + Google OAuth), a product shop with cart and checkout, user dashboard with profile management, order tracking, coupon system, and a complete admin dashboard for managing orders, products, categories, users, messages, and subscribers.
+
+**Live Demo:** https://ecommerce-showcase-silk.vercel.app/
+
+---
+
+## Pages
+
+| Route | Access | Page |
+|-------|--------|------|
+| `/` | Public | **Home** — Hero with animated 3D background, stats counter, features preview (6 cards), testimonials, FAQ accordion, newsletter subscription |
+| `/shop` | Public | **Shop** — Product grid (Jackets + Shoes), search, category filter, size/color/quantity selector, add to cart |
+| `/features` | Public | **Features** — Overview of ShopSphere capabilities |
+| `/features/:slug` | Public | **Feature Detail** — Individual feature pages (inventory, analytics, payments, order tracking, CRM, multi-vendor) |
+| `/pricing` | Public | **Pricing** — Pricing plans |
+| `/about` | Public | **About** — Company story, team, milestones |
+| `/contact` | Public | **Contact** — Contact form (stored in Supabase + local fallback) |
+| `/login` | Public | **Login** — Email/password + Google OAuth, admin redirect, forgot password |
+| `/signup` | Public | **Signup** — Create account with name, email, password |
+| `/auth/callback` | Public | **Auth Callback** — Google OAuth redirect handler |
+| `/checkout` | Auth required | **Checkout** — Shipping form, coupon codes, order summary, COD payment |
+| `/order-success/:orderId` | Auth required | **Order Success** — Order confirmation with details |
+| `/my-orders` | Auth required | **My Orders** — User order history with status |
+| `/user-dashboard` | Auth required | **User Dashboard** — Profile management, settings, account info, FAQ, support |
+| `/dashboard` | Auth required | Backward compatible alias for `/user-dashboard` |
+| `/admin` | Public | **Admin Login** — Admin authentication |
+| `/admin/dashboard` | Admin auth | **Admin Dashboard** — Stats, Orders, Products, Categories, Users, Messages, Subscribers, Database viewer |
+| `/admin/settings` | Admin auth | **Admin Settings** — Admin profile settings |
+
+---
 
 ## Features
 
-### User Features
-- **Authentication**: Email/Password signup and login, Google OAuth login via Supabase
-- **User Dashboard**: Profile picture upload/replace/delete, display name editing, account info
-- **Protected Routes**: `/user-dashboard` and `/dashboard` are only accessible when logged in
-- **Role-Based Redirect**: Admin email automatically redirects to admin dashboard, regular users go to user dashboard
-- **Navbar Integration**: Shows user avatar and name when logged in, Login button when logged out
+### 🏠 Home Page
+- **Hero Section** — "Build Your **Online Store** Faster Than Ever" with animated 3D background (Three.js), morphing blobs, floating icons, dashboard mockup with chart animation, floating badges ("✅ New order — $249.00", "📈 Sales up 34% this week"), hero stats (10K+ Users, 500+ Stores, 98% Satisfaction)
+- **Stats Bar** — Animated count-up statistics
+- **Features Preview** — 6 feature cards: Inventory Management, Analytics Dashboard, Secure Payments, Order Tracking, Customer Management, Multi-Vendor Support
+- **Testimonials** — 3 reviews from FROSTED TECH team (Haseeb, Wahaj Qureshi, Maheen)
+- **FAQ Accordion** — 5 questions about ShopSphere
+- **Newsletter** — Email subscription with Supabase + local fallback
 
-### Admin Features
-- Admin login (hardcoded credentials for demo)
-- Dashboard with stats (messages, subscribers, **orders, revenue, customers, products, pending orders**)
-- **Order Management**: view all orders, search by order #/name/email, filter by status, update order status (pending → confirmed → processing → shipped → delivered → cancelled) and payment status
-- **Product Management**: add/edit/delete products with image upload (Supabase Storage `product-images` bucket), stock, featured/active flags
-- **Category Management**: full CRUD for categories
-- **Users**: view all registered users with order counts and role
-- Approve/email contact messages via EmailJS
-- Delete messages and subscribers
-- Database schema viewer
-- Logout button in topbar and sidebar
+### 🛍️ Shop
+- **Products:** Jackets (Winter Leather Jacket, Classic Denim Jacket, City Bomber Jacket, Everyday Hoodie Jacket, Alpine Puffer Jacket) and Shoes (Nike Air Max, Adidas Ultraboost, Puma RS-X, Converse Chuck Taylor, New Balance 574)
+- **Product Cards** — Image, name, price, rating, badges (Best seller, New, 20% off), size/color/quantity selection
+- **Search** — Real-time product search
+- **Category Filter** — All Products / Jackets / Shoes
+- **Results Count** — Shows matching product count
 
-### E-Commerce Workflow
-- Shopping cart persisted in `localStorage` for guests and synced to Supabase for logged-in users; navbar shows live item count
-- Email/Password + Google authentication required before checkout
-- Checkout collects shipping details (validated), shows order summary with images, applies coupons, and computes subtotal/shipping/discount/total
-- Orders saved with a unique order number; each item saved to `order_items`; a `payments` row is created (COD = pending)
-- Inventory stock decremented automatically; out-of-stock purchases blocked; order confirmation email sent to customer and new-order notification to admin (EmailJS/Resend ready)
-- "My Orders" page with order details and status
-- Coupons (percentage/fixed), shipping rules (free/flat/city-based), and Cash-on-Delivery payment (Stripe/PayPal structured for later)
+### 🔐 Authentication
+- **Email/Password** — Sign up and login via Supabase Auth
+- **Google OAuth** — One-click login with Google via Supabase
+- **Role-Based Redirect** — Admin email automatically redirects to admin dashboard, regular users go to user dashboard
+- **Protected Routes** — `/user-dashboard`, `/my-orders`, `/checkout`, and admin routes guarded by auth route guards
+- **Password Reset** — Forgot password flow via Supabase
+- **Persistent Session** — Auth state tracked via Supabase `onAuthStateChange`
 
-### Email Notifications
-After each order, `src/services/emailService.js` sends:
-- **Customer**: order confirmation (order #, items, total)
-- **Admin**: new order notification
+### 🛒 E-Commerce Workflow
+- **Shopping Cart** — Persisted in `localStorage` for guests, synced to Supabase `cart` table for logged-in users; live item count badge in navbar
+- **Coupon System** — Apply coupon codes at checkout:
+  | Code | Type | Discount |
+  |------|------|----------|
+  | `WELCOME10` | Percentage | 10% off |
+  | `SUMMER20` | Percentage | 20% off |
+  | `VIP25` | Percentage | 25% off |
+  | `FREESHIP` | Fixed | $10 off |
+- **Shipping Rules** — Free shipping over $100, flat rate $5.99 under $100, per-country overrides (e.g., Pakistan flat $5), per-city overrides (e.g., Karachi free)
+- **Checkout** — Validated shipping form (full name, email, phone, country, city, address, postal code), country selector (US, Canada, UK, Pakistan, UAE, Saudi Arabia, Other), order summary with product images, subtotal/shipping/discount/total breakdown
+- **Payment** — Cash on Delivery (COD); Stripe/PayPal structure ready for later
+- **Order Processing** — Unique order numbers (`ORD-XXXXXX`), items saved to `order_items`, `payments` row created (COD = pending), inventory stock decremented, out-of-stock blocked
+- **Email Notifications** — Customer order confirmation + admin new-order notification via EmailJS or Resend Edge Function
 
-Configure EmailJS via `VITE_EMAILJS_*` (already present in `.env`), or set `VITE_RESEND_FUNCTION_URL` for Resend Edge Function delivery. If neither is configured, the payload is logged and checkout continues.
+### 👤 User Dashboard (`/user-dashboard`)
+- **Profile Card** — Avatar display (uploaded image or initial letter fallback), upload/change/delete profile picture (Supabase "avatars" bucket), welcome greeting with display name, email, member-since date, logout button
+- **Profile Settings** — Edit display name saved to `profiles` table with success/error messages
+- **Account Information** — Email, Name, Member Since, User ID
+- **Help & Support** — FAQ accordion (5 questions), Contact Support button, Privacy Policy link, Terms & Conditions link
 
-### Public Pages
-- Home, Features (with detail pages), Pricing, About, Contact
-- Shop with product grid, search, categories, cart drawer
-- Responsive navigation with dark/light theme persistence
-- Contact form and newsletter subscription with Supabase + local fallback
-- Animated backgrounds, 3D card effects, AOS scroll animations, loading screen, FAQ, back-to-top button
+### 👑 Admin Dashboard (`/admin/dashboard`)
+- **Dashboard Tab** — Stats cards: Total Orders, Total Revenue, Total Customers, Total Products, Pending Orders, Total Messages, Newsletter Subs, Unread Messages, Approved Messages; Recent Contact Messages table; Recent Newsletter Subscribers table; Database Overview
+- **Orders Tab** — View all orders (order #, customer, email, phone, date, total, status, payment status), filter by status (pending/confirmed/processing/shipped/delivered/cancelled), update order status via dropdown, search/filter bar
+- **Products Tab** — View all products with image thumbnails, name, category, price, stock, active/inactive status; Add Product button opens ProductModal (image upload to Supabase Storage `product-images` bucket, name, description, price, category, stock, featured/active flags); Edit/Delete actions
+- **Categories Tab** — View all categories (name, slug, description); Add/Edit/Delete via CategoryModal
+- **Users Tab** — View all registered users with email, name, role, order count
+- **Messages Tab** — Contact form inbox with #, name, email, subject, message preview, date, read/unread status, approved status; filter by all/unread/read/pending/approved; search messages; Approve & Send Email via EmailJS; Delete messages
+- **Subscribers Tab** — View all newsletter subscribers with email and subscription date; Remove subscribers
+- **Database Tab** — Schema viewer for `contact_messages` and `newsletter` tables (column names, types, descriptions, CREATE TABLE SQL), sample queries
+- **Auto-Refresh** — Data refreshes every 30 seconds
+- **Real-Time Notifications** — New entry toast notifications for contact messages and newsletter subscriptions
+
+### 📧 Email Notifications
+After each successful order, `src/services/emailService.js` sends:
+1. **Customer** — Order confirmation with order number, items list (product name × qty — total), subtotal, shipping, discount, total, payment method, shipping address
+2. **Admin** — New order notification with customer details, order summary, items, shipping address
+
+Supports **EmailJS** (client-side via `VITE_EMAILJS_*` vars) and **Resend Edge Function** (via `VITE_RESEND_FUNCTION_URL`). If neither is configured, the payload is logged and checkout continues silently.
+
+---
 
 ## Tech Stack
 
@@ -54,145 +106,21 @@ Configure EmailJS via `VITE_EMAILJS_*` (already present in `.env`), or set `VITE
 | Vite 8 | Development server and production build |
 | React Router 7 | Client-side routing |
 | Supabase Auth | Email/Password and Google OAuth authentication |
-| Supabase Database | Contact, newsletter, and user profile data |
-| Supabase Storage | Avatar image uploads ("avatars" bucket) |
-| EmailJS | Customer approval email delivery |
-| Tailwind CSS 4 and custom CSS | Styling |
-| Three.js | 3D animated backgrounds |
+| Supabase Database | Contact forms, newsletter, user profiles, orders, products, categories, cart, coupons, payments, inventory |
+| Supabase Storage | Avatar uploads ("avatars" bucket) and product images ("product-images" bucket) |
+| EmailJS | Email delivery (order confirmations, admin notifications, approval replies) |
+| Resend (Edge Function) | Alternative email delivery via `VITE_RESEND_FUNCTION_URL` |
+| Tailwind CSS 4 + Custom CSS (4600+ lines) | Styling |
+| Three.js / @react-three/fiber / @react-three/drei | 3D animated background effects |
+| AOS (Animate on Scroll) | Scroll-based reveal animations |
+| bcryptjs | Password hashing helpers |
+| Oxlint | Code linting |
 
-## Project Structure
+---
 
-```text
-ecommerce-showcase/
-├── public/                         # Static files served as-is
-│   ├── favicon.svg
-│   └── icons.svg
-├── src/
-│   ├── assets/                     # Images and the Supabase client
-│   │   ├── hero.png
-│   │   └── subabaseclient.js       # Supabase client singleton
-│   ├── components/                 # Reusable components
-│   │   ├── Navbar.jsx              # Navbar with auth-aware user menu
-│   │   ├── UserProtectedRoute.jsx  # Route guard for authenticated users
-│   │   ├── ProtectedRoute.jsx      # Route guard for admin users
-│   │   ├── ShopOverlays.jsx        # Login modal, cart drawer, order modal
-│   │   └── ...                     # Other UI components
-│   ├── context/
-│   │   └── ShopContext.jsx         # Global state: auth, cart, profile, toast
-│   ├── pages/
-│   │   ├── Home.jsx
-│   │   ├── Features.jsx
-│   │   ├── FeatureDetail.jsx
-│   │   ├── Pricing.jsx
-│   │   ├── About.jsx
-│   │   ├── Contact.jsx
-│   │   ├── Shop.jsx
-│   │   ├── UserDashboard.jsx       # Full user dashboard with profile management
-│   │   ├── auth/                   # Standalone auth pages
-│   │   │   ├── Login.jsx           # Email/password + Google login with role redirect
-│   │   │   └── Signup.jsx          # Registration with auto-login
-│   │   └── admin/                  # Admin section
-│   │       ├── AdminLogin.jsx
-│   │       ├── AdminDashboard.jsx  # Stats, messages, subscribers, DB viewer
-│   │       ├── AdminNavbar.jsx
-│   │       └── AdminSettings.jsx
-│   ├── services/
-│   │   ├── shopAuth.js             # Auth functions + profile CRUD + avatar upload
-│   │   ├── adminAuth.js            # Admin credential helpers
-│   │   ├── supabase.js             # Generic Supabase data helpers
-│   │   └── localStore.js           # Browser-storage fallback and merge helpers
-│   ├── App.jsx                     # Routes, theme provider, loader
-│   ├── main.jsx                    # React entry point
-│   └── index.css                   # Global and responsive styles (4600+ lines)
-├── supabase/                       # SQL schema backup files
-├── .env.example                    # Environment-variable template
-├── index.html
-├── package.json
-└── vite.config.js
-```
+## Environment Variables
 
-## Authentication Flow
-
-### Login Page (`/login`)
-- Enter email and password
-- **Admin check**:Admin email and password redirects to `/admin/dashboard`
-- **Regular user**: Authenticates via Supabase Auth → redirects to `/user-dashboard`
-- Google OAuth button → authenticates via Supabase → redirects to `/user-dashboard`
-
-### Signup Page (`/signup`)
-- Enter name, email, password
-- Creates account in Supabase Auth with `full_name` metadata
-- If auto-confirm is enabled in Supabase → automatically redirected to dashboard
-- If email confirmation required → shows pending message
-
-### User Dashboard (`/user-dashboard`)
-Protected by `UserProtectedRoute` — redirects to `/login` if not authenticated.
-
-**Profile Card:**
-- Avatar display (uploaded image or initial letter fallback)
-- Upload / Change / Delete profile picture (stored in Supabase "avatars" bucket)
-- Welcome greeting with display name
-- Email and member-since date
-- Logout button
-
-**Profile Settings:**
-- Edit display name and save to `profiles` table
-- Success/error messages
-
-**Account Information:**
-- Email, Name, Member Since, User ID
-
-**Help & Support:**
-- FAQ accordion (5 questions)
-- Contact Support button
-- Privacy Policy link
-- Terms & Conditions link
-
-### Logout
-- Clears all localStorage auth keys
-- Calls `supabase.auth.signOut()`
-- Navbar updates immediately (Login button reappears)
-
-## Profile Table (Required SQL)
-
-```sql
-CREATE TABLE profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  full_name TEXT,
-  avatar_url TEXT,
-  avatar_file_path TEXT,
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Row Level Security
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can read own profile"
-  ON profiles FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users can insert own profile"
-  ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
-
-CREATE POLICY "Users can update own profile"
-  ON profiles FOR UPDATE USING (auth.uid() = id);
-```
-
-### Supabase Storage: "avatars" bucket
-1. Go to Supabase Dashboard → Storage
-2. Create a **public** bucket named `avatars`
-3. Optional: add RLS policy for authenticated uploads
-
-## Getting Started
-
-### 1. Install dependencies
-
-```bash
-npm install
-```
-
-### 2. Configure environment variables
-
-Copy `.env.example` to `.env`, then add your Supabase and EmailJS values.
+Copy `.env.example` to `.env`:
 
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
@@ -200,91 +128,182 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 VITE_EMAILJS_SERVICE_ID=your_emailjs_service_id
 VITE_EMAILJS_TEMPLATE_ID=your_emailjs_template_id
 VITE_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
+
+# Optional:
+# VITE_RESEND_FUNCTION_URL=https://your-resend-edge-function.com/send
+# VITE_ADMIN_EMAIL=admin@example.com
 ```
 
-Restart the Vite server whenever `.env` changes.
+---
 
-### 3. Set up Supabase tables
+## Database Setup
 
-Run the full e-commerce schema in `supabase/ecommerce-schema.sql` in the Supabase SQL Editor. It creates:
-`profiles`, `categories`, `products`, `cart`, `orders`, `order_items`, `addresses`, `coupons`, `payments`, `inventory_log` — with primary/foreign keys, indexes, constraints, RLS policies, helper functions, triggers, seed categories, and the `product-images` storage bucket.
+Run `supabase/ecommerce-schema.sql` in the Supabase SQL Editor. This creates:
 
-Also create a **public** Storage bucket named `product-images` (the SQL attempts this automatically; otherwise do it in the dashboard) so the admin product uploader can store images.
+### E-Commerce Tables
+- `profiles` — User profiles (id, full_name, avatar_url, avatar_file_path) with RLS
+- `categories` — Product categories (id, name, slug, description)
+- `products` — Products (id, name, slug, description, price, image, category_id, stock, active, featured)
+- `cart` — Shopping cart items (id, user_id, product_id, quantity, size, color)
+- `orders` — Orders (id, order_number, customer_name, email, phone, subtotal, shipping_cost, discount, total, status, payment_method, shipping_address as JSONB)
+- `order_items` — Order line items (id, order_id, product_id, product_name, quantity, price, total, size, color)
+- `addresses` — Saved addresses (id, user_id, full_name, email, phone, country, city, address, postal_code)
+- `coupons` — Discount coupons (id, code, type, value, min_order_amount, usage_limit, used_count, expires_at)
+- `payments` — Payment records (id, order_id, amount, payment_method, payment_status)
+- `inventory_log` — Stock change tracking (id, product_id, change, reason, order_id)
 
+### Contact & Newsletter Tables
 ```sql
-CREATE TABLE contact (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  email text NOT NULL,
-  subject text NOT NULL,
-  message text NOT NULL,
-  read boolean DEFAULT false,
-  created_at timestamptz DEFAULT now()
+CREATE TABLE contact_messages (
+  id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  subject TEXT,
+  message TEXT NOT NULL,
+  read BOOLEAN DEFAULT false
 );
 
 CREATE TABLE newsletter (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  email text NOT NULL UNIQUE,
-  created_at timestamptz DEFAULT now()
+  id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  email TEXT NOT NULL UNIQUE
 );
 ```
 
-### 4. Configure EmailJS (for admin approval replies)
+### Storage Buckets
+- **"avatars"** — Public bucket for user profile pictures
+- **"product-images"** — Public bucket for product images (created automatically by e-commerce schema SQL)
 
-Create an EmailJS template with these dynamic values:
+---
 
-| Template field | Value |
-| --- | --- |
-| To Email | `{{user_email}}` |
-| Reply To | `{{reply_to}}` |
-| Subject | `{{title}}` or `{{subject}}` |
-| Content | Use `{{name}}` and `{{message}}` as needed |
+## Project Structure
 
-### 5. Run locally
+```text
+ecommerce-showcase/
+├── public/
+│   ├── favicon.svg
+│   └── icons.svg
+├── src/
+│   ├── assets/
+│   │   ├── hero.png
+│   │   ├── admin-profile.jpg
+│   │   └── subabaseclient.js          # Supabase client singleton
+│   ├── components/
+│   │   ├── Navbar.jsx                 # Navigation with auth, cart, theme toggle
+│   │   ├── Footer.jsx                 # Site footer
+│   │   ├── Loader.jsx                 # Animated loading screen
+│   │   ├── BackToTop.jsx              # Scroll-to-top button
+│   │   ├── AnimatedBackground.jsx     # Three.js 3D background
+│   │   ├── FeatureCard.jsx            # Feature preview card
+│   │   ├── TestimonialCard.jsx        # Testimonial card
+│   │   ├── Stats.jsx                  # Animated stats counter
+│   │   ├── FAQ.jsx                    # FAQ accordion
+│   │   ├── Newsletter.jsx             # Email subscription form
+│   │   ├── ShopOverlays.jsx           # Login modal, cart drawer, order modal
+│   │   ├── UserProtectedRoute.jsx     # Auth route guard
+│   │   ├── ProtectedRoute.jsx         # Admin route guard
+│   │   └── admin/
+│   │       ├── ProductModal.jsx       # Add/edit product modal
+│   │       └── CategoryModal.jsx      # Add/edit category modal
+│   ├── context/
+│   │   └── ShopContext.jsx            # Global state: auth, cart, profile, orders, coupons, shipping
+│   ├── data/
+│   │   ├── products.js                # Static product catalog (10 products)
+│   │   └── featureDetails.js          # Feature detail page content + team data
+│   ├── pages/
+│   │   ├── Home.jsx                   # Landing page
+│   │   ├── Shop.jsx                   # Product shop
+│   │   ├── Features.jsx               # Features overview
+│   │   ├── FeatureDetail.jsx          # Individual feature page
+│   │   ├── Pricing.jsx                # Pricing plans
+│   │   ├── About.jsx                  # About page
+│   │   ├── Contact.jsx                # Contact form
+│   │   ├── Checkout.jsx               # Full checkout flow
+│   │   ├── OrderSuccess.jsx           # Order confirmation
+│   │   ├── MyOrders.jsx               # User order history
+│   │   ├── UserDashboard.jsx          # User profile dashboard
+│   │   ├── auth/
+│   │   │   ├── Login.jsx              # Login page
+│   │   │   ├── Signup.jsx             # Signup page
+│   │   │   └── Callback.jsx           # Google OAuth callback
+│   │   └── admin/
+│   │       ├── AdminLogin.jsx         # Admin login
+│   │       ├── AdminDashboard.jsx     # Main admin panel
+│   │       └── AdminSettings.jsx      # Admin settings
+│   ├── services/
+│   │   ├── shopAuth.js                # Auth functions + profile CRUD + avatar upload
+│   │   ├── adminAuth.js               # Admin credential helpers
+│   │   ├── ecommerceService.js        # Supabase e-commerce helpers
+│   │   ├── emailService.js            # Email notification service
+│   │   ├── supabase.js                # Generic Supabase helpers
+│   │   └── localStore.js              # localStorage fallback + merge helpers
+│   ├── App.jsx                        # Routes, theme, layout
+│   ├── main.jsx                       # Entry point
+│   └── index.css                      # Global styles (4600+ lines)
+├── supabase/
+│   ├── ecommerce-schema.sql           # Full e-commerce schema
+│   ├── commerce-schema.sql            # Alternative schema
+│   └── login-table-auth.sql           # Login table auth schema
+├── .env.example
+├── index.html
+├── package.json
+├── vite.config.js
+└── vercel.json
+```
 
+---
+
+## Getting Started
+
+### 1. Install dependencies
+```bash
+npm install
+```
+
+### 2. Configure environment
+```bash
+cp .env.example .env
+# Edit .env with your Supabase and EmailJS credentials
+```
+
+### 3. Set up Supabase
+- Run `supabase/ecommerce-schema.sql` in Supabase SQL Editor
+- Create a **public** Storage bucket named `avatars`
+
+### 4. Run locally
 ```bash
 npm run dev
 ```
 
-OPEN: https://ecommerce-showcase-silk.vercel.app/
+---
 
 ## Available Scripts
 
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Start the development server |
-| `npm run build` | Create a production build |
-| `npm run preview` | Preview the production build locally |
-| `npm run lint` | Run the configured linter |
+| `npm run dev` | Start development server |
+| `npm run build` | Create production build |
+| `npm run preview` | Preview production build locally |
+| `npm run lint` | Run Oxlint linter |
 
-## Route Map
-
-| Route | Access | Description |
-|-------|--------|-------------|
-| `/` | Public | Home page |
-| `/shop` | Public | Product shop |
-| `/features` | Public | Features overview |
-| `/features/:slug` | Public | Feature detail |
-| `/pricing` | Public | Pricing plans |
-| `/about` | Public | About page |
-| `/contact` | Public | Contact form |
-| `/login` | Public | Login (Email/Password + Google) |
-| `/signup` | Public | Create account |
-| `/user-dashboard` | Auth required | User dashboard |
-| `/dashboard` | Auth required | Backward compatible alias |
-| `/admin` | Public | Admin login |
-| `/admin/dashboard` | Admin auth | Admin dashboard (Orders, Products, Categories, Users, Messages, Subscribers) |
-| `/admin/settings` | Admin auth | Admin settings |
+---
 
 ## Deployment
 
-Deploy to Vercel or another Vite-compatible static host. Configure the same `VITE_` environment variables in the hosting provider's project settings, then redeploy.
+Configured for **Vercel** (`vercel.json`). Deploy to any Vite-compatible static host.
+
+**Live:** https://ecommerce-showcase-silk.vercel.app/
+
+---
 
 ## Security Notes
 
-- The admin credentials (`shakeelbhatti143143@gmail.com` / `1234qwerty`) are currently hardcoded in the frontend for demonstration purposes. **Do not use in production** — implement proper role-based access control in Supabase.
-- Supabase Row Level Security (RLS) should be enabled on all tables.
-- The anonymous Supabase key is safe to expose in client code, but RLS policies must restrict data access appropriately.
+- Admin credentials (`shakeelbhatti143143@gmail.com` / `1234qwerty`) are hardcoded for demo only — **do not use in production**
+- Enable Row Level Security (RLS) on all Supabase tables
+- The anonymous Supabase key is safe in client code, but RLS must restrict data access
+
+---
 
 ## License
 
